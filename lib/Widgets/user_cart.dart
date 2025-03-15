@@ -1,0 +1,205 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:inter_repair_car/Controllers/user_update_controller.dart';
+
+final UserUpdateController controller = UserUpdateController();
+
+class UserCart extends StatelessWidget {
+  const UserCart({super.key, required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    // Dummy data
+
+    final String phone = "70 000 000";
+
+    return Dismissible(
+      key: Key(name), // Unique key for the Dismissible widget
+      direction:
+          DismissDirection.horizontal, // Allow both left and right swipes
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.blue, // Blue background for the edit action
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        child: const Icon(Icons.edit, color: Colors.white, size: 30),
+      ),
+      secondaryBackground: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.red, // Red background for the delete action
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: Colors.white, size: 30),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          // Swipe left (delete)
+          return await _confirmDelete(context);
+        } else if (direction == DismissDirection.startToEnd) {
+          // Swipe right (edit)
+          _showEditBottomSheet(context);
+          return false; // Don't dismiss the widget
+        }
+        return false;
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.grey[900]!,
+              Colors.grey[800]!.withValues(alpha: .6),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        height: 100,
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(7, 0, 20, 0),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Text(
+                name,
+                style: GoogleFonts.montserrat(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                phone,
+                style: GoogleFonts.montserrat(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(95, 255, 255, 255),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method to show the edit bottom sheet
+  void _showEditBottomSheet(BuildContext context) {
+    // Dummy data
+    controller.nameController = TextEditingController(text: "John Doe");
+    controller.phoneController = TextEditingController(text: "70 000 000");
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            color: Colors.grey[800],
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Edit User Details",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: controller.nameController,
+                  decoration: const InputDecoration(
+                    labelText: "Name",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: controller.phoneController,
+                  decoration: const InputDecoration(
+                    labelText: "Phone",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Call the onUpdate callback with the new values
+                    // Example: onUpdate(nameController.text, phoneController.text);
+                    Navigator.of(context).pop(); // Close the bottom sheet
+                  },
+                  child: const Text(
+                    "Save Changes",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper method to confirm deletion
+  Future<bool> _confirmDelete(BuildContext context) async {
+    final bool confirmDelete = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "Delete User",
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            "Are you sure you want to delete this user? All related cars will also be deleted.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete) {
+      // Call the onDelete callback
+      // Example: onDelete();
+    }
+
+    return confirmDelete;
+  }
+}
