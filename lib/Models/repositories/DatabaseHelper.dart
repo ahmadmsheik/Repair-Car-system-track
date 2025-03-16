@@ -24,8 +24,6 @@ class DatabaseHelper {
     return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
-  
-
   Future<void> _onCreate(Database db, int version) async {
 
     // Create Vehicles table
@@ -39,6 +37,7 @@ class DatabaseHelper {
           plate_number TEXT not null,
           engine_type TEXT null,
           mileage INTEGER null,
+          image_path TEXT,
           user_id INTEGER null,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
@@ -154,7 +153,7 @@ class DatabaseHelper {
       );
     });
   }
-  
+
   Future<int> updateVehicle(Vehicle vehicle) async {
     final db = await database;
     return await db.update(
@@ -166,11 +165,11 @@ class DatabaseHelper {
   }
 
   Future<int> insertTaskForVehicle(Task task) async {
-  final db = await database;
+    final db = await database;
 
-  // Insert the task into the database
-  return await db.insert('tasks', task.toMap());
-}
+    // Insert the task into the database
+    return await db.insert('tasks', task.toMap());
+  }
 
   Future<int> deleteVehicle(int id) async {
     final db = await database;
@@ -178,12 +177,12 @@ class DatabaseHelper {
   }
 
   Future<void> deleteDatabasef() async {
-  // Get the path to the database
-  String databasePath2 = join(await getDatabasesPath(), 'app_database.db');
+    // Get the path to the database
+    String databasePath2 = join(await getDatabasesPath(), 'app_database.db');
 
-  // Delete the database file
-  await deleteDatabase(databasePath2);
+    // Delete the database file
+    await deleteDatabase(databasePath2);
 
-  print('Database deleted successfully');
-}
+    print('Database deleted successfully');
+  }
 }

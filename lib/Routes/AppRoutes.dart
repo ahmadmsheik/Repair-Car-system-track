@@ -8,5 +8,6 @@ class Approutes {
   static final String signInView = '/signin';
   static final String registerView = '/register';
   static final String userProfileView = '/userProfile';
+  static final String addtaskPage = '/addTaskPage';
   
 }

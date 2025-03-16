@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Routes/AppRoutes.dart';
+import 'package:inter_repair_car/Views/adding_a_vehicle_with_task_view.dart';
 import 'package:inter_repair_car/Views/car_detail_page.dart';
 import 'package:inter_repair_car/Views/car_list_page.dart';
 import 'package:inter_repair_car/Views/home_view.dart';
@@ -24,5 +25,6 @@ class Apppage {
     GetPage(name: Approutes.signInView, page: () => SignInView()),
     GetPage(name: Approutes.registerView, page: () => RegisterView()),
     GetPage(name: Approutes.userProfileView, page: () => UserProfileView()),
+    GetPage(name: Approutes.addtaskPage, page: () => AddingAVehicleWithTaskView()),
   ];
 }
