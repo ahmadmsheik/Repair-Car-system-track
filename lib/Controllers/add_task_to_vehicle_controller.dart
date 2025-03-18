@@ -11,4 +11,6 @@ class AddTaskToVehicleController {
 
   TimeOfDay selectedStartTime = TimeOfDay.now();
   Status taskStatusSelected = Status.onGoing;
+
+  final GlobalKey<FormState> addTaskKey = GlobalKey<FormState>();
 }

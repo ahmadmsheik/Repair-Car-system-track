@@ -2,28 +2,54 @@ import 'dart:convert';
 
 class Vehicle {
   int? id;
-  String? vin;
+  String vin;
   int plateNumber;
   String make;
   String model;
-  int? year;
+  int year;
   String? engineType;
   int? mileage;
-  String? imagePath; // Add this field
-  final int? userId;
+  String imagePath; // Add this field
+  final int userId;
 
   Vehicle({
     this.id,
-    this.vin,
+    required this.vin,
     required this.plateNumber,
     required this.make,
     required this.model,
-    this.year,
+    required this.year,
     this.engineType,
     this.mileage,
-    this.imagePath, // Add this field
-    this.userId,
+    required this.imagePath, // Add this field
+    required this.userId,
   });
+
+  Vehicle copyWith({
+    int? id,
+    String? vin,
+    int? plateNumber,
+    String? make,
+    String? model,
+    int? year,
+    String? engineType,
+    int? mileage,
+    String? imagePath,
+    int? userId,
+  }) {
+    return Vehicle(
+      id: id ?? this.id,
+      vin: vin ?? this.vin,
+      plateNumber: plateNumber ?? this.plateNumber,
+      make: make ?? this.make,
+      model: model ?? this.model,
+      year: year ?? this.year,
+      engineType: engineType ?? this.engineType,
+      mileage: mileage ?? this.mileage,
+      imagePath: imagePath ?? this.imagePath,
+      userId: userId ?? this.userId,
+    );
+  }
 
   // Convert Vehicle object to a map
   Map<String, dynamic> toMap() {
@@ -61,5 +87,6 @@ class Vehicle {
   String toJson() => json.encode(toMap());
 
   // Convert JSON to Vehicle object
-  factory Vehicle.fromJson(String source) => Vehicle.fromMap(json.decode(source));
+  factory Vehicle.fromJson(String source) =>
+      Vehicle.fromMap(json.decode(source));
 }

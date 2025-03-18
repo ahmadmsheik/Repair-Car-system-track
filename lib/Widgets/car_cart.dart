@@ -1,16 +1,30 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart'; // Import DatabaseHelper
+
+final dbHelper = DatabaseHelper();
 
 class CarCart extends StatelessWidget {
-  const CarCart({super.key, required this.name});
+  const CarCart({
+    super.key,
+    required this.name,
+    required this.imagePath,
+    required this.year,
+    required this.vehicleId, // Replace vin with vehicleId
+  });
 
   final String name;
+  final String imagePath;
+  final int year;
+  final int vehicleId; // Use vehicleId to fetch tasks
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: const Key("carCart"), // Unique key for the Dismissible widget
+      key: Key(name), // Use name as the key
       direction: DismissDirection.endToStart, // Swipe from right to left
       background: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -27,48 +41,54 @@ class CarCart extends StatelessWidget {
         // Show a confirmation dialog for deletion
         return await _confirmDelete(context);
       },
-      child: GestureDetector(
-        onTap: () {
-          Get.toNamed('/carDetail');
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.grey[900]!,
-                Colors.grey[800]!.withValues(alpha: 0.6),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.grey[900]!,
+              Colors.grey[800]!.withValues(alpha: .6),
+            ],
           ),
-          width: double.infinity,
-          height: 150,
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          padding: const EdgeInsets.fromLTRB(7, 0, 20, 0),
-          child: Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.grey[900]!,
-                      Colors.grey[800]!.withValues(alpha: 0.6),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        width: double.infinity,
+        height: 150,
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(7, 0, 20, 0),
+        child: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.grey[900]!,
+                    Colors.grey[800]!.withValues(alpha: .6),
+                  ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    "assets/images/car.png",
-                    width: 160,
-                    height: 130,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 50),
-              Column(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child:
+                    (imagePath == 'assets/images/car.png')
+                        ? Image.asset(
+                          imagePath,
+                          width: 160,
+                          height: 130,
+                          fit: BoxFit.cover,
+                        )
+                        : Image.file(
+                          File(imagePath),
+                          width: 160,
+                          height: 130,
+                          fit: BoxFit.cover,
+                        ),
+              ),
+            ),
+            const SizedBox(width: 50),
+            Expanded(
+              // Use Expanded to constrain the text width
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -79,29 +99,61 @@ class CarCart extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
                     ),
+                    overflow:
+                        TextOverflow.ellipsis, // Add ellipsis for overflow
+                    maxLines: 1, // Limit to one line
                   ),
                   Text(
-                    "2008",
+                    "$year",
                     style: GoogleFonts.montserrat(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       color: const Color.fromARGB(95, 255, 255, 255),
                     ),
                   ),
-                  RichText(
-                    text: TextSpan(
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: const <TextSpan>[TextSpan(text: '\$180')],
+                  FutureBuilder<double>(
+                    future: DatabaseHelper().calculateTotalCostForVehicle(
+                      vehicleId,
                     ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator(); // Show a loader while fetching data
+                      } else if (snapshot.hasError) {
+                        return Text(
+                          'Error: ${snapshot.error}',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16,
+                            color: Colors.red,
+                          ),
+                        );
+                      } else {
+                        final totalCost = snapshot.data ?? 0.0;
+                        return RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                text: '\$${totalCost.toStringAsFixed(2)}',
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -139,10 +191,24 @@ class CarCart extends StatelessWidget {
     );
 
     if (confirmDelete) {
-      // Call the onDelete callback (if you have one)
-      // Example: onDelete();
+      try {
+        await dbHelper.deleteVehicle(vehicleId);
+        Get.snackbar(
+          'Success',
+          'Car deleted successfully!',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return true;
+      } catch (e) {
+        Get.snackbar(
+          'Error',
+          'Failed to delete the car. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
+      }
     }
 
-    return confirmDelete;
+    return false;
   }
 }

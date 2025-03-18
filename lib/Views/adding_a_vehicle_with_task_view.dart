@@ -13,6 +13,7 @@ import 'package:inter_repair_car/Models/Entities/vehicle.dart';
 import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
 import 'package:inter_repair_car/Widgets/phone_number_formatter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart';
 
 class AddingAVehicleWithTaskView extends StatefulWidget {
   const AddingAVehicleWithTaskView({super.key});
@@ -26,38 +27,35 @@ class _AddingAVehicleWithTaskViewState
     extends State<AddingAVehicleWithTaskView> {
   Future<String?> saveImagePermanently(XFile imageFile) async {
     try {
-      // Get the app's documents directory
-      final Directory appDir = await getApplicationDocumentsDirectory();
-      // Create a file in the app's documents directory
+      // Get the external storage directory (e.g., "Pictures" folder)
+      final Directory? externalDir = await getExternalStorageDirectory();
+      if (externalDir == null) {
+        throw Exception("External storage directory not found");
+      }
+
+      // Create a subdirectory for your app (e.g., "InterRepairCar")
+      final Directory appDir = Directory('${externalDir.path}/InterRepairCar');
+      if (!await appDir.exists()) {
+        await appDir.create(
+          recursive: true,
+        ); // Create the directory if it doesn't exist
+      }
+
+      // Generate a unique file name
       final String fileName =
           'vehicle_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final File permanentFile = File('${appDir.path}/$fileName');
+      final File permanentFile = File(join(appDir.path, fileName));
 
       // Copy the temporary file to the permanent location
       await permanentFile.writeAsBytes(await imageFile.readAsBytes());
 
+      // Log the saved file path
+
       // Return the path of the saved file
       return permanentFile.path;
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Error while saving image"),
-            content: Text(
-              "There was an error while trying to save the image in the device.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Ok'),
-              ),
-            ],
-          );
-        },
-      );
+      // Handle errors
+
       return null;
     }
   }
@@ -199,6 +197,9 @@ class _AddingAVehicleWithTaskViewState
                                     if (value == null || value.isEmpty) {
                                       return 'Plate Number is required';
                                     }
+                                    if (int.tryParse(value) == null) {
+                                      return "Please enter a valid plate numebr";
+                                    }
                                     return null;
                                   },
                                   controller: controller.plateNumberController,
@@ -232,7 +233,7 @@ class _AddingAVehicleWithTaskViewState
                                 child: TextFormField(
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return null;
+                                      return 'Year field is required';
                                     }
                                     final int? year = int.tryParse(value);
                                     if (year == null ||
@@ -246,7 +247,7 @@ class _AddingAVehicleWithTaskViewState
                                   keyboardType: TextInputType.number,
                                   maxLength: 4,
                                   decoration: InputDecoration(
-                                    labelText: 'Year',
+                                    labelText: 'Year*',
                                     iconColor: Colors.white,
                                     hintText: 'Manufacturing year',
                                     hintStyle: TextStyle(
@@ -832,17 +833,60 @@ class _AddingAVehicleWithTaskViewState
                                         }
                                       }
 
-                                      // Insert User
-                                      final User user = User(
-                                        name:
-                                            controller.ownerNameController.text,
-                                        phone: int.parse(
-                                          controller.phoneNumberController.text
-                                              .replaceAll(" ", ""),
-                                        ),
-                                      );
-                                      final int userId = await dbHelper
-                                          .insertUser(user);
+                                      // Check if the user already exists by phone number
+                                      final String phoneNumber = controller
+                                          .phoneNumberController
+                                          .text
+                                          .replaceAll(" ", "");
+                                      final User? existingUser = await dbHelper
+                                          .getUserByPhone(
+                                            int.parse(phoneNumber),
+                                          );
+
+                                      int userId;
+                                      if (existingUser != null) {
+                                        // Use the existing user's ID
+                                        userId = existingUser.id!;
+                                      } else {
+                                        // Insert a new user
+                                        final User user = User(
+                                          name:
+                                              controller
+                                                  .ownerNameController
+                                                  .text,
+                                          phone: int.parse(phoneNumber),
+                                        );
+                                        userId = await dbHelper.insertUser(
+                                          user,
+                                        );
+                                      }
+
+                                      // Check if the car already exists by VIN
+                                      final String vin =
+                                          controller.vinController.text;
+                                      final Vehicle? existingVehicle =
+                                          await dbHelper.getVehicleByVin(vin);
+
+                                      if (existingVehicle != null) {
+                                        // Show a dialog informing the user to add a task to the existing car
+                                        Get.dialog(
+                                          AlertDialog(
+                                            title: const Text(
+                                              "Car Already Exists",
+                                            ),
+                                            content: const Text(
+                                              "A car with this VIN already exists. Please add a task to this car from the correct place.",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Get.back(),
+                                                child: const Text("OK"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        return; // Stop further execution
+                                      }
 
                                       // Insert Vehicle
                                       final Vehicle vehicle = Vehicle(
@@ -853,21 +897,10 @@ class _AddingAVehicleWithTaskViewState
                                             controller.carMakerController.text,
                                         model:
                                             controller.carModelController.text,
-                                        vin:
-                                            controller
-                                                .vinController
-                                                .text, // VIN is required
-                                        year:
-                                            controller
-                                                    .yearController
-                                                    .text
-                                                    .isNotEmpty
-                                                ? int.tryParse(
-                                                  controller
-                                                      .yearController
-                                                      .text,
-                                                )
-                                                : null,
+                                        vin: vin, // VIN is required
+                                        year: int.parse(
+                                          controller.yearController.text,
+                                        ),
                                         engineType:
                                             controller
                                                     .engineTypeController
@@ -889,10 +922,13 @@ class _AddingAVehicleWithTaskViewState
                                                 )
                                                 : null,
                                         imagePath:
-                                            savedImagePath ??
-                                            'car.png', // Use saved image path or default
+                                            (savedImagePath == null ||
+                                                    savedImagePath.isEmpty)
+                                                ? 'assets/images/car.png'
+                                                : savedImagePath,
                                         userId: userId,
                                       );
+
                                       final int vehicleId = await dbHelper
                                           .insertVehicle(vehicle);
 
@@ -920,6 +956,8 @@ class _AddingAVehicleWithTaskViewState
 
                                       // Show success message and close the bottom sheet
                                       Get.back();
+                                      Get.back();
+                                      _imageFile = null;
                                       Get.snackbar(
                                         'Success',
                                         'Data saved successfully!',
@@ -930,7 +968,6 @@ class _AddingAVehicleWithTaskViewState
                                         'Error',
                                         'An error occurred. $e',
                                       );
-                                      print('Error: $e');
                                     }
                                   }
                                 },

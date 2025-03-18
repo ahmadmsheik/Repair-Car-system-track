@@ -22,10 +22,7 @@ class HomeView extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          _buildMiddleSection(),
-        ],
+        children: [const SizedBox(height: 24), _buildMiddleSection()],
       ),
     );
   }
@@ -35,10 +32,9 @@ class HomeView extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [
-          Colors.blueGrey[800]!,
-          Colors.blueGrey[900]!,
-        ]),
+        gradient: LinearGradient(
+          colors: [Colors.blueGrey[800]!, Colors.blueGrey[900]!],
+        ),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
@@ -52,7 +48,7 @@ class HomeView extends StatelessWidget {
                 icon: FontAwesomeIcons.car,
                 title: "Cars",
                 onTap: () {
-                 Get.toNamed('/carsList'); // Navigate to the new page
+                  Get.toNamed('/carsList'); // Navigate to the new page
                 },
               ),
               const SizedBox(height: 12),
@@ -61,7 +57,7 @@ class HomeView extends StatelessWidget {
                 icon: FontAwesomeIcons.listCheck,
                 title: "Ongoing Tasks",
                 onTap: () {
-                  Get.toNamed("/typeTask", arguments: "Ongoing");
+                  Get.toNamed("/typeTask", arguments: "onGoing");
                 },
               ),
               const SizedBox(height: 12),
@@ -70,7 +66,7 @@ class HomeView extends StatelessWidget {
                 icon: FontAwesomeIcons.clock,
                 title: "Pending Tasks",
                 onTap: () {
-                  Get.toNamed("/typeTask", arguments: "Pending");
+                  Get.toNamed("/typeTask", arguments: "pending");
                 },
               ),
               const SizedBox(height: 12),
@@ -79,7 +75,7 @@ class HomeView extends StatelessWidget {
                 icon: FontAwesomeIcons.check,
                 title: "Completed Tasks",
                 onTap: () {
-                  Get.toNamed("/typeTask", arguments: "Completed");
+                  Get.toNamed("/typeTask", arguments: "completed");
                 },
               ),
               const SizedBox(height: 12),

@@ -1,40 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Widgets/car_cart.dart';
+import 'package:inter_repair_car/Controllers/car_listing_controller.dart';
 
-class CarListPage extends StatefulWidget {
-  const CarListPage({super.key});
-
-  @override
-  _CarListPageState createState() => _CarListPageState();
-}
-
-class _CarListPageState extends State<CarListPage> {
+class CarListPage extends StatelessWidget {
+  final CarListingController carListingController = Get.put(
+    CarListingController(),
+  );
   final TextEditingController _searchController = TextEditingController();
-  List<String> carNames = [
-    "Tesla Model X",
-    "Toyota Camry",
-    "Ford Mustang",
-    "BMW X5",
-    "Audi A4",
-    "Honda Civic",
-  ]; // Dummy car names
-  List<String> filteredCars = [];
-
-  @override
-  void initState() {
-    super.initState();
-    filteredCars = carNames; // Initialize with all cars
-  }
-
-  // Filter cars based on search query
-  void _filterCars(String query) {
-    setState(() {
-      filteredCars = carNames
-          .where((name) => name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +42,9 @@ class _CarListPageState extends State<CarListPage> {
               padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
-                onChanged: _filterCars,
+                onChanged: (query) {
+                  carListingController.filterVehicles(query);
+                },
                 decoration: InputDecoration(
                   hintText: "Search cars...",
                   hintStyle: const TextStyle(color: Colors.white70),
@@ -79,22 +54,22 @@ class _CarListPageState extends State<CarListPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: .3), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withValues(alpha: .3),
+                      width: 1.0,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: .3), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withValues(alpha: .3),
+                      width: 1.0,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: .5), // Slightly more opacity when focused
-                      width: 1.5, // Slightly thicker border when focused
+                      color: Colors.white.withValues(alpha: .5),
+                      width: 1.5,
                     ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -105,15 +80,51 @@ class _CarListPageState extends State<CarListPage> {
                 style: const TextStyle(color: Colors.white),
               ),
             ),
-            // List of Cars
+            // List of Cars or Empty State
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                itemCount: filteredCars.length,
-                itemBuilder: (context, index) {
-                  return CarCart(name: filteredCars[index]);
-                },
-              ),
+              child: Obx(() {
+                if (carListingController.isLoading.value) {
+                  // Show loading indicator while data is being fetched
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  );
+                } else {
+                  final filteredVehicles =
+                      carListingController.filteredVehicles;
+
+                  return filteredVehicles.isEmpty
+                      ? Center(
+                        child: Text(
+                          "No cars found",
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white.withValues(alpha: .7),
+                          ),
+                        ),
+                      )
+                      : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        itemCount: filteredVehicles.length,
+                        itemBuilder: (context, index) {
+                          final vehicle = filteredVehicles[index];
+                          return GestureDetector(
+                            onTap: () async {
+                              // Navigate to the CarDetailPage with the selected vehicle ID
+                              Get.toNamed('/carDetail', arguments: vehicle.id);
+                            },
+                            child: CarCart(
+                              name: "${vehicle.make} ${vehicle.model}",
+                              imagePath: vehicle.imagePath,
+                              year: vehicle.year,
+                              vehicleId: vehicle.id!,
+                            ),
+                          );
+                        },
+                      );
+                }
+              }),
             ),
           ],
         ),

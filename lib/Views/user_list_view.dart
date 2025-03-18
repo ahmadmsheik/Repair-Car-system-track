@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inter_repair_car/Controllers/user_list_controller.dart';
+import 'package:inter_repair_car/Controllers/user_controller.dart'; // Import the controller
+import 'package:inter_repair_car/Models/Entities/User.dart';
 import 'package:inter_repair_car/Widgets/user_cart.dart';
 
 class UserListView extends StatefulWidget {
@@ -11,29 +12,26 @@ class UserListView extends StatefulWidget {
 }
 
 class _UserListViewState extends State<UserListView> {
-  final UserListController controller = UserListController();
-  List<String> clientNames = [
-    "John Doe",
-    "Jane Smith",
-    "Alice Johnson",
-    "Bob Brown",
-    "Charlie Davis",
-    "Eva Wilson",
-  ]; // Dummy client names
-  List<String> filteredClients = [];
+  final UserController _userController = Get.put(
+    UserController(),
+  ); // Initialize the controller
+  final TextEditingController _searchController = TextEditingController();
+  List<User> filteredUsers = [];
 
   @override
   void initState() {
     super.initState();
-    filteredClients = clientNames; // Initialize with all clients
+    _userController.fetchUsers(); // Fetch users when the view initializes
   }
 
-  // Filter clients based on search query
-  void _filterClients(String query) {
+  // Filter users based on search query
+  void _filterUsers(String query) {
     setState(() {
-      filteredClients =
-          clientNames
-              .where((name) => name.toLowerCase().contains(query.toLowerCase()))
+      filteredUsers =
+          _userController.users
+              .where(
+                (user) => user.name.toLowerCase().contains(query.toLowerCase()),
+              )
               .toList();
     });
   }
@@ -58,7 +56,7 @@ class _UserListViewState extends State<UserListView> {
           gradient: LinearGradient(
             colors: [
               const Color.fromARGB(255, 64, 83, 92),
-              const Color.fromARGB(255, 92, 92, 92).withValues(alpha: .6),
+              const Color.fromARGB(255, 92, 92, 92).withOpacity(0.6),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -70,39 +68,33 @@ class _UserListViewState extends State<UserListView> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
-                controller: controller.searchController,
-                onChanged: _filterClients,
+                controller: _searchController,
+                onChanged: _filterUsers,
                 decoration: InputDecoration(
                   hintText: "Search clients...",
                   hintStyle: const TextStyle(color: Colors.white70),
                   prefixIcon: const Icon(Icons.search, color: Colors.white70),
                   filled: true,
-                  fillColor: Colors.grey[800]!.withValues(alpha: .5),
+                  fillColor: Colors.grey[800]!.withOpacity(0.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(
-                        alpha: .3,
-                      ), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1.0,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(
-                        alpha: .3,
-                      ), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1.0,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withValues(
-                        alpha: .5,
-                      ), // Slightly more opacity when focused
-                      width: 1.5, // Slightly thicker border when focused
+                      color: Colors.white.withOpacity(0.5),
+                      width: 1.5,
                     ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -115,13 +107,25 @@ class _UserListViewState extends State<UserListView> {
             ),
             // List of Clients
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                itemCount: filteredClients.length,
-                itemBuilder: (context, index) {
-                  return UserCart(name: filteredClients[index]);
-                },
-              ),
+              child: Obx(() {
+                if (_userController.users.isEmpty) {
+                  return const Center(child: Text("No users found"));
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  itemCount:
+                      _searchController.text.isEmpty
+                          ? _userController.users.length
+                          : filteredUsers.length,
+                  itemBuilder: (context, index) {
+                    final user =
+                        _searchController.text.isEmpty
+                            ? _userController.users[index]
+                            : filteredUsers[index];
+                    return UserCart(user: user);
+                  },
+                );
+              }),
             ),
           ],
         ),

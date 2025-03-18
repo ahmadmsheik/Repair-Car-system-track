@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:inter_repair_car/Controllers/user_controller.dart';
 import 'package:inter_repair_car/Controllers/user_update_controller.dart';
+import 'package:inter_repair_car/Models/Entities/User.dart';
+import 'package:inter_repair_car/Widgets/phone_number_formatter.dart';
 
-final UserUpdateController controller = UserUpdateController();
+final UserUpdateController updateController = UserUpdateController();
 
 class UserCart extends StatelessWidget {
-  const UserCart({super.key, required this.name});
+  final User user;
 
-  final String name;
+  const UserCart({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data
-
-    final String phone = "70 000 000";
+    final UserController userController = Get.find<UserController>();
 
     return Dismissible(
-      key: Key(name), // Unique key for the Dismissible widget
+      key: Key(user.id.toString()), // Unique key for the Dismissible widget
       direction:
           DismissDirection.horizontal, // Allow both left and right swipes
       background: Container(
@@ -45,10 +47,10 @@ class UserCart extends StatelessWidget {
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
           // Swipe left (delete)
-          return await _confirmDelete(context);
+          return await _confirmDelete(context, userController);
         } else if (direction == DismissDirection.startToEnd) {
           // Swipe right (edit)
-          _showEditBottomSheet(context);
+          _showEditBottomSheet(context, userController);
           return false; // Don't dismiss the widget
         }
         return false;
@@ -56,10 +58,7 @@ class UserCart extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.grey[900]!,
-              Colors.grey[800]!.withValues(alpha: .6),
-            ],
+            colors: [Colors.grey[900]!, Colors.grey[800]!.withOpacity(0.6)],
           ),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -75,7 +74,7 @@ class UserCart extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
               Text(
-                name,
+                user.name,
                 style: GoogleFonts.montserrat(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
@@ -84,7 +83,7 @@ class UserCart extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                phone,
+                user.phone.toString(),
                 style: GoogleFonts.montserrat(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -99,10 +98,14 @@ class UserCart extends StatelessWidget {
   }
 
   // Helper method to show the edit bottom sheet
-  void _showEditBottomSheet(BuildContext context) {
-    // Dummy data
-    controller.nameController = TextEditingController(text: "John Doe");
-    controller.phoneController = TextEditingController(text: "70 000 000");
+  void _showEditBottomSheet(
+    BuildContext context,
+    UserController userController,
+  ) {
+    updateController.nameController = TextEditingController(text: user.name);
+    updateController.phoneController = TextEditingController(
+      text: user.phone.toString(),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -115,46 +118,81 @@ class UserCart extends StatelessWidget {
           child: Container(
             color: Colors.grey[800],
             padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "Edit User Details",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+            child: Form(
+              key: updateController.updateUserKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Edit User Details",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller.nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Name",
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Name is required";
+                      }
+                      return null;
+                    },
+                    controller: updateController.nameController,
+                    decoration: const InputDecoration(
+                      labelText: "Name",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: controller.phoneController,
-                  decoration: const InputDecoration(
-                    labelText: "Phone",
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Phone Number is required';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return "Enter a valid phone number";
+                      }
+                      return null;
+                    },
+                    maxLength: 8,
+                    keyboardType: TextInputType.phone,
+                    controller: updateController.phoneController,
+
+                    decoration: const InputDecoration(
+                      labelText: "Phone",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // Call the onUpdate callback with the new values
-                    // Example: onUpdate(nameController.text, phoneController.text);
-                    Navigator.of(context).pop(); // Close the bottom sheet
-                  },
-                  child: const Text(
-                    "Save Changes",
-                    style: TextStyle(color: Colors.white),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      // Create an updated user object
+                      if (updateController.updateUserKey.currentState!
+                          .validate()) {
+                        final updatedUser = User(
+                          id: user.id,
+                          name: updateController.nameController.text,
+                          phone: int.parse(
+                            updateController.phoneController.text,
+                          ),
+                        );
+
+                        // Update the user in the database
+                        await userController.updateUser(updatedUser);
+
+                        // Close the bottom sheet
+                        Get.back();
+                      }
+                    },
+                    child: const Text(
+                      "Save Changes",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         );
@@ -163,7 +201,10 @@ class UserCart extends StatelessWidget {
   }
 
   // Helper method to confirm deletion
-  Future<bool> _confirmDelete(BuildContext context) async {
+  Future<bool> _confirmDelete(
+    BuildContext context,
+    UserController userController,
+  ) async {
     final bool confirmDelete = await showDialog(
       context: context,
       builder: (context) {
@@ -196,8 +237,8 @@ class UserCart extends StatelessWidget {
     );
 
     if (confirmDelete) {
-      // Call the onDelete callback
-      // Example: onDelete();
+      // Delete the user
+      await userController.deleteUser(user.id!);
     }
 
     return confirmDelete;

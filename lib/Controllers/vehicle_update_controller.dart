@@ -9,4 +9,5 @@ class VehicleUpdateController {
   final TextEditingController carYearController = TextEditingController();
   final TextEditingController carEngineTypeController = TextEditingController();
   final TextEditingController carMileageController = TextEditingController();
+  final GlobalKey<FormState> editFormKey = GlobalKey<FormState>(); 
 }

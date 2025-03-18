@@ -7,4 +7,6 @@ class TaskUpdateController extends GetxController {
   TextEditingController costController = TextEditingController();
 
   TextEditingController detailsController = TextEditingController();
+
+  final GlobalKey<FormState> taskUpdateKey = GlobalKey<FormState>();
 }

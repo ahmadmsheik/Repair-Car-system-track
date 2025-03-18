@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:inter_repair_car/Controllers/task_controller.dart';
 import 'package:inter_repair_car/Controllers/task_update_controller.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
+import 'package:inter_repair_car/Models/Entities/vehicle.dart';
+import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
 
 final TaskUpdateController controller = TaskUpdateController();
 
@@ -16,40 +22,27 @@ class TypeTaskView extends StatefulWidget {
 
 class _TypeTaskViewState extends State<TypeTaskView> {
   final TextEditingController _searchController = TextEditingController();
-  List<Task> tasks = [
-    Task(
-      name: "Fix Engine",
-      status: "onGoing",
-      timeStart: DateTime.now(),
-      timeEnd: DateTime.now().add(Duration(hours: 2)),
-      cost: 150.0,
-      details: "Engine needs replacement",
-      vehicleId: 101,
-    ),
-    Task(
-      name: "Change Oil",
-      status: "pending",
-      timeStart: DateTime.now(),
-      timeEnd: null,
-      cost: 50.0,
-      details: null,
-      vehicleId: null,
-    ),
-  ]; // Dummy tasks
-  List<Task> filteredTasks = [];
+  final TaskController _taskController = Get.put(
+    TaskController(),
+  ); // Initialize the controller
 
   @override
   void initState() {
     super.initState();
-    filteredTasks = tasks; // Initialize with all tasks
+    _taskController.fetchTasksByStatus(
+      widget.typeTask,
+    ); // Fetch tasks by status
   }
 
   // Filter tasks based on search query
   void _filterTasks(String query) {
     setState(() {
-      filteredTasks = tasks
-          .where((task) => task.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _taskController.tasks.value =
+          _taskController.tasks
+              .where(
+                (task) => task.name.toLowerCase().contains(query.toLowerCase()),
+              )
+              .toList();
     });
   }
 
@@ -65,7 +58,7 @@ class _TypeTaskViewState extends State<TypeTaskView> {
           gradient: LinearGradient(
             colors: [
               Colors.grey[900]!,
-              Colors.grey[800]!.withOpacity(0.6),
+              Colors.grey[800]!.withValues(alpha: .6),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -86,26 +79,26 @@ class _TypeTaskViewState extends State<TypeTaskView> {
                   hintStyle: const TextStyle(color: Colors.white70),
                   prefixIcon: const Icon(Icons.search, color: Colors.white70),
                   filled: true,
-                  fillColor: Colors.grey[800]!.withOpacity(0.5),
+                  fillColor: Colors.grey[800]!.withValues(alpha: .5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.3), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withValues(alpha: .3),
+                      width: 1.0,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.3), // White border with low opacity
-                      width: 1.0, // Border width
+                      color: Colors.white.withValues(alpha: .3),
+                      width: 1.0,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.5), // Slightly more opacity when focused
-                      width: 1.5, // Slightly thicker border when focused
+                      color: Colors.white.withValues(alpha: .5),
+                      width: 1.5,
                     ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
@@ -122,12 +115,20 @@ class _TypeTaskViewState extends State<TypeTaskView> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredTasks.length,
-                itemBuilder: (context, index) {
-                  return _buildTaskCard(context, filteredTasks[index]);
-                },
-              ),
+              child: Obx(() {
+                if (_taskController.tasks.isEmpty) {
+                  return const Center(child: Text("No tasks found"));
+                }
+                return ListView.builder(
+                  itemCount: _taskController.tasks.length,
+                  itemBuilder: (context, index) {
+                    return _buildTaskCard(
+                      context,
+                      _taskController.tasks[index],
+                    );
+                  },
+                );
+              }),
             ),
           ],
         ),
@@ -180,6 +181,24 @@ class _TypeTaskViewState extends State<TypeTaskView> {
             const SizedBox(height: 8),
             // Task details
             _buildDetailItem('Status', task.status),
+            // Add the vehicle name here
+            if (task.vehicleId != null)
+              FutureBuilder<Vehicle?>(
+                future: DatabaseHelper().getVehicleById(task.vehicleId!),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _buildDetailItem('Vehicle', 'Loading...');
+                  }
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return _buildDetailItem('Vehicle', 'Unknown vehicle');
+                  }
+                  final vehicle = snapshot.data!;
+                  return _buildDetailItem(
+                    'Vehicle',
+                    '${vehicle.make} ${vehicle.model}',
+                  );
+                },
+              ),
             _buildDetailItem('Start Time', task.timeStart.toString()),
             if (task.timeEnd != null)
               _buildDetailItem('End Time', task.timeEnd.toString()),
@@ -209,6 +228,169 @@ class _TypeTaskViewState extends State<TypeTaskView> {
     );
   }
 
+  // Helper method to show the edit bottom sheet
+  void _showEditBottomSheet(BuildContext context, Task task) {
+    controller.nameController = TextEditingController(text: task.name);
+    controller.costController = TextEditingController(
+      text: task.cost.toString(),
+    );
+    controller.detailsController = TextEditingController(text: task.details);
+
+    // Dropdown value for status
+    String selectedStatus = task.status;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                color: Colors.blueGrey[800],
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: controller.taskUpdateKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "Edit Task Details",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Task Name is required';
+                          }
+                          return null;
+                        },
+                        controller: controller.nameController,
+                        decoration: const InputDecoration(
+                          labelText: "Name",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Status dropdown
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: .2),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: DropdownButton<String>(
+                              value: selectedStatus,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: "onGoing",
+                                  child: Text("ONGOING"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "pending",
+                                  child: Text("PENDING"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "completed",
+                                  child: Text("COMPLETED"),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedStatus = value!;
+                                });
+                              },
+                              dropdownColor: Colors.blueGrey[800],
+                              style: const TextStyle(color: Colors.white),
+                              underline: Container(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Cost is required';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Enter valid number';
+                                }
+                                return null;
+                              },
+                              keyboardType: TextInputType.number,
+                              controller: controller.costController,
+                              decoration: const InputDecoration(
+                                labelText: "Cost",
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: controller.detailsController,
+                        decoration: const InputDecoration(
+                          labelText: "Details",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (controller.taskUpdateKey.currentState!
+                              .validate()) {
+                            final updatedTask = Task(
+                              id: task.id,
+                              name: controller.nameController.text,
+                              status: selectedStatus,
+                              timeStart: task.timeStart,
+                              timeEnd: task.timeEnd,
+                              cost: double.parse(
+                                controller.costController.text,
+                              ),
+                              details: controller.detailsController.text,
+                              vehicleId: task.vehicleId,
+                            );
+
+                            // Update the task in the database
+                            await _taskController.updateTask(updatedTask);
+
+                            // Close the bottom sheet
+                            Get.back();
+                          }
+                        },
+                        child: const Text(
+                          "Save Changes",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // Helper method to build detail items
   Widget _buildDetailItem(String label, String value) {
     return Padding(
@@ -231,135 +413,6 @@ class _TypeTaskViewState extends State<TypeTaskView> {
     );
   }
 
-  // Helper method to show the edit bottom sheet
-  void _showEditBottomSheet(BuildContext context, Task task) {
-    controller.nameController = TextEditingController(
-      text: task.name,
-    );
-    controller.costController = TextEditingController(
-      text: task.cost.toString(),
-    );
-    controller.detailsController = TextEditingController(
-      text: task.details,
-    );
-
-    // Dropdown value for status
-    String selectedStatus = task.status;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                color: Colors.blueGrey[800],
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Edit Task Details",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: controller.nameController,
-                      decoration: const InputDecoration(
-                        labelText: "Name",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Status dropdown
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: .2),
-                              width: 1,
-                            ),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: DropdownButton<String>(
-                            value: selectedStatus,
-                            items: const [
-                              DropdownMenuItem(
-                                value: "onGoing",
-                                child: Text("ONGOING"),
-                              ),
-                              DropdownMenuItem(
-                                value: "pending",
-                                child: Text("PENDING"),
-                              ),
-                              DropdownMenuItem(
-                                value: "completed",
-                                child: Text("COMPLETED"),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                selectedStatus = value!;
-                              });
-                            },
-                            dropdownColor: Colors.blueGrey[800],
-                            style: const TextStyle(color: Colors.white),
-                            underline: Container(),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: controller.costController,
-                            decoration: const InputDecoration(
-                              labelText: "Cost",
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: controller.detailsController,
-                      decoration: const InputDecoration(
-                        labelText: "Details",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Save changes (dummy logic for now)
-                        Get.back();
-                      },
-                      child: const Text(
-                        "Save Changes",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   // Helper method to confirm deletion
   void _confirmDelete(BuildContext context, Task task) {
     showDialog(
@@ -371,14 +424,20 @@ class _TypeTaskViewState extends State<TypeTaskView> {
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: const Text("Cancel"),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             TextButton(
               onPressed: () {
-                // Delete the task (dummy logic for now)
+                _taskController.deleteTask(task.id!, widget.typeTask);
                 Get.back();
               },
-              child: const Text("Delete"),
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -399,14 +458,20 @@ class _TypeTaskViewState extends State<TypeTaskView> {
           actions: [
             TextButton(
               onPressed: () => Get.back(),
-              child: const Text("Cancel"),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             TextButton(
               onPressed: () {
-                // Mark the task as completed (dummy logic for now)
-                Get.back();
+                Navigator.pop(context);
+                _taskController.markTaskAsCompleted(task.id!, widget.typeTask);
               },
-              child: const Text("Confirm"),
+              child: const Text(
+                "Confirm",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );

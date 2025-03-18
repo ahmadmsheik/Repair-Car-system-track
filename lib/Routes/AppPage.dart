@@ -25,6 +25,9 @@ class Apppage {
     GetPage(name: Approutes.signInView, page: () => SignInView()),
     GetPage(name: Approutes.registerView, page: () => RegisterView()),
     GetPage(name: Approutes.userProfileView, page: () => UserProfileView()),
-    GetPage(name: Approutes.addtaskPage, page: () => AddingAVehicleWithTaskView()),
+    GetPage(
+      name: Approutes.addtaskPage,
+      page: () => AddingAVehicleWithTaskView(),
+    ),
   ];
 }
