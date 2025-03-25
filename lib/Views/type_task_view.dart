@@ -368,7 +368,7 @@ class _TypeTaskViewState extends State<TypeTaskView> {
                             );
 
                             // Update the task in the database
-                            await _taskController.updateTask(updatedTask);
+                            await _taskController.updateTask(updatedTask, widget.typeTask);
 
                             // Close the bottom sheet
                             Get.back();

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Controllers/user_controller.dart'; // Import the controller
-import 'package:inter_repair_car/Models/Entities/User.dart';
+import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Widgets/user_cart.dart';
 
 class UserListView extends StatefulWidget {
@@ -16,7 +16,7 @@ class _UserListViewState extends State<UserListView> {
     UserController(),
   ); // Initialize the controller
   final TextEditingController _searchController = TextEditingController();
-  List<User> filteredUsers = [];
+  List<Client> filteredUsers = [];
 
   @override
   void initState() {
@@ -56,7 +56,7 @@ class _UserListViewState extends State<UserListView> {
           gradient: LinearGradient(
             colors: [
               const Color.fromARGB(255, 64, 83, 92),
-              const Color.fromARGB(255, 92, 92, 92).withOpacity(0.6),
+              const Color.fromARGB(255, 92, 92, 92).withValues(alpha: .6),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -75,25 +75,25 @@ class _UserListViewState extends State<UserListView> {
                   hintStyle: const TextStyle(color: Colors.white70),
                   prefixIcon: const Icon(Icons.search, color: Colors.white70),
                   filled: true,
-                  fillColor: Colors.grey[800]!.withOpacity(0.5),
+                  fillColor: Colors.grey[800]!.withValues(alpha: .5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: .3),
                       width: 1.0,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: .3),
                       width: 1.0,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: .5),
                       width: 1.5,
                     ),
                   ),
@@ -122,7 +122,7 @@ class _UserListViewState extends State<UserListView> {
                         _searchController.text.isEmpty
                             ? _userController.users[index]
                             : filteredUsers[index];
-                    return UserCart(user: user);
+                    return UserCart(client: user);
                   },
                 );
               }),

@@ -21,9 +21,9 @@ class TaskController extends GetxController {
   }
 
   // Update a task
-  Future<void> updateTask(Task task) async {
+  Future<void> updateTask(Task task, String currentStatus) async {
     await _databaseHelper.updateTask(task);
-    await fetchTasksByStatus(task.status); // Refresh the task list
+    await fetchTasksByStatus(currentStatus); // Refresh the task list
   }
 
   // Delete a task

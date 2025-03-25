@@ -9,8 +9,8 @@ class Vehicle {
   int year;
   String? engineType;
   int? mileage;
-  String imagePath; // Add this field
-  final int userId;
+  String imagePath;
+  final int clientId;
 
   Vehicle({
     this.id,
@@ -21,8 +21,8 @@ class Vehicle {
     required this.year,
     this.engineType,
     this.mileage,
-    required this.imagePath, // Add this field
-    required this.userId,
+    required this.imagePath,
+    required this.clientId,
   });
 
   Vehicle copyWith({
@@ -47,11 +47,10 @@ class Vehicle {
       engineType: engineType ?? this.engineType,
       mileage: mileage ?? this.mileage,
       imagePath: imagePath ?? this.imagePath,
-      userId: userId ?? this.userId,
+      clientId: userId ?? clientId,
     );
   }
 
-  // Convert Vehicle object to a map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -62,12 +61,11 @@ class Vehicle {
       'year': year,
       'engine_type': engineType,
       'mileage': mileage,
-      'image_path': imagePath, // Add this field
-      'user_id': userId,
+      'image_path': imagePath,
+      'client_id': clientId,
     };
   }
 
-  // Convert a map to a Vehicle object
   factory Vehicle.fromMap(Map<String, dynamic> map) {
     return Vehicle(
       id: map['id'],
@@ -78,15 +76,29 @@ class Vehicle {
       year: map['year'],
       engineType: map['engine_type'],
       mileage: map['mileage'],
-      imagePath: map['image_path'], // Add this field
-      userId: map['user_id'],
+      imagePath: map['image_path'],
+      clientId: map['client_id'],
     );
   }
 
-  // Convert Vehicle object to JSON
   String toJson() => json.encode(toMap());
 
-  // Convert JSON to Vehicle object
-  factory Vehicle.fromJson(String source) =>
-      Vehicle.fromMap(json.decode(source));
+  factory Vehicle.fromJson(Map<String, dynamic> json) => Vehicle(
+    id: json['id'],
+    vin: json['vin'] as String, // Ensure non-null
+    plateNumber: json['plate_number'] as int,
+    make: json['make'] as String,
+    model: json['model'] as String,
+    year: json['year'] as int,
+    engineType: json['engine_type']?.toString(), // Allow null
+    mileage:
+        json['mileage'] != null
+            ? int.tryParse(json['mileage'].toString())
+            : null,
+    imagePath:
+        json['image_path'].isEmpty
+            ? 'assets/images/car.png'
+            : json['image_path'].toString(),
+    clientId: json['client_id'] as int,
+  );
 }

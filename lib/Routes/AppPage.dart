@@ -9,7 +9,6 @@ import 'package:inter_repair_car/Views/settings_view.dart';
 import 'package:inter_repair_car/Views/sign_in_view.dart';
 import 'package:inter_repair_car/Views/type_task_view.dart';
 import 'package:inter_repair_car/Views/user_list_view.dart';
-import 'package:inter_repair_car/Views/user_profile_view.dart';
 
 class Apppage {
   static List<GetPage> pages = [
@@ -24,7 +23,6 @@ class Apppage {
     GetPage(name: Approutes.settingsView, page: () => SettingsView()),
     GetPage(name: Approutes.signInView, page: () => SignInView()),
     GetPage(name: Approutes.registerView, page: () => RegisterView()),
-    GetPage(name: Approutes.userProfileView, page: () => UserProfileView()),
     GetPage(
       name: Approutes.addtaskPage,
       page: () => AddingAVehicleWithTaskView(),

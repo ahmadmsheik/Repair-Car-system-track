@@ -4,22 +4,21 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:inter_repair_car/Controllers/user_controller.dart';
 import 'package:inter_repair_car/Controllers/user_update_controller.dart';
-import 'package:inter_repair_car/Models/Entities/User.dart';
-import 'package:inter_repair_car/Widgets/phone_number_formatter.dart';
+import 'package:inter_repair_car/Models/Entities/Client.dart';
 
 final UserUpdateController updateController = UserUpdateController();
 
 class UserCart extends StatelessWidget {
-  final User user;
+  final Client client;
 
-  const UserCart({super.key, required this.user});
+  const UserCart({super.key, required this.client});
 
   @override
   Widget build(BuildContext context) {
     final UserController userController = Get.find<UserController>();
 
     return Dismissible(
-      key: Key(user.id.toString()), // Unique key for the Dismissible widget
+      key: Key(client.id.toString()), // Unique key for the Dismissible widget
       direction:
           DismissDirection.horizontal, // Allow both left and right swipes
       background: Container(
@@ -58,7 +57,7 @@ class UserCart extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.grey[900]!, Colors.grey[800]!.withOpacity(0.6)],
+            colors: [Colors.grey[900]!, Colors.grey[800]!.withValues(alpha: .6)],
           ),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -74,7 +73,7 @@ class UserCart extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
               Text(
-                user.name,
+                client.name,
                 style: GoogleFonts.montserrat(
                   fontSize: 24,
                   fontWeight: FontWeight.w500,
@@ -83,7 +82,7 @@ class UserCart extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                user.phone.toString(),
+                client.phone.toString(),
                 style: GoogleFonts.montserrat(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -102,9 +101,9 @@ class UserCart extends StatelessWidget {
     BuildContext context,
     UserController userController,
   ) {
-    updateController.nameController = TextEditingController(text: user.name);
+    updateController.nameController = TextEditingController(text: client.name);
     updateController.phoneController = TextEditingController(
-      text: user.phone.toString(),
+      text: client.phone.toString(),
     );
 
     showModalBottomSheet(
@@ -170,8 +169,8 @@ class UserCart extends StatelessWidget {
                       // Create an updated user object
                       if (updateController.updateUserKey.currentState!
                           .validate()) {
-                        final updatedUser = User(
-                          id: user.id,
+                        final updatedUser = Client(
+                          id: client.id,
                           name: updateController.nameController.text,
                           phone: int.parse(
                             updateController.phoneController.text,
@@ -238,7 +237,7 @@ class UserCart extends StatelessWidget {
 
     if (confirmDelete) {
       // Delete the user
-      await userController.deleteUser(user.id!);
+      await userController.deleteUser(client.id!);
     }
 
     return confirmDelete;

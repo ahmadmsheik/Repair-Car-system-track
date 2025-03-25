@@ -59,8 +59,8 @@ class _NavigationMenuState extends State<NavigationMenu> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.gear),
-            label: 'Settings',
+            icon: FaIcon(FontAwesomeIcons.userLarge),
+            label: 'User',
           ),
         ],
       ),

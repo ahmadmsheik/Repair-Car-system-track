@@ -8,7 +8,7 @@ import 'package:get/instance_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inter_repair_car/Controllers/add_task_controller.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
-import 'package:inter_repair_car/Models/Entities/User.dart';
+import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Models/Entities/vehicle.dart';
 import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
 import 'package:inter_repair_car/Widgets/phone_number_formatter.dart';
@@ -838,8 +838,8 @@ class _AddingAVehicleWithTaskViewState
                                           .phoneNumberController
                                           .text
                                           .replaceAll(" ", "");
-                                      final User? existingUser = await dbHelper
-                                          .getUserByPhone(
+                                      final Client? existingUser =
+                                          await dbHelper.getUserByPhone(
                                             int.parse(phoneNumber),
                                           );
 
@@ -849,7 +849,7 @@ class _AddingAVehicleWithTaskViewState
                                         userId = existingUser.id!;
                                       } else {
                                         // Insert a new user
-                                        final User user = User(
+                                        final Client user = Client(
                                           name:
                                               controller
                                                   .ownerNameController
@@ -926,7 +926,7 @@ class _AddingAVehicleWithTaskViewState
                                                     savedImagePath.isEmpty)
                                                 ? 'assets/images/car.png'
                                                 : savedImagePath,
-                                        userId: userId,
+                                        clientId: userId,
                                       );
 
                                       final int vehicleId = await dbHelper

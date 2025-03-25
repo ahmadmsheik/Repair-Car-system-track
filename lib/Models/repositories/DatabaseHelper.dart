@@ -1,5 +1,5 @@
 import 'package:inter_repair_car/Models/Entities/Task.dart';
-import 'package:inter_repair_car/Models/Entities/User.dart';
+import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Models/Entities/vehicle.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -24,6 +24,29 @@ class DatabaseHelper {
     return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
+  // Add to DatabaseHelper class
+  Future<int> countCompletedTasks() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      '''
+    SELECT COUNT(*) FROM tasks
+    where tasks.status = 'completed'
+  ''',
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<DateTime> getClientJoinDate(int clientId) async {
+    final db = await database;
+    final result = await db.query(
+      'clients',
+      columns: ['created_at'],
+      where: 'id = ?',
+      whereArgs: [clientId],
+    );
+    return DateTime.parse(result.first['created_at'] as String);
+  }
+
   Future<void> _onCreate(Database db, int version) async {
     // Create Vehicles table
     await db.execute('''
@@ -31,32 +54,32 @@ class DatabaseHelper {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           make TEXT not null,
           model TEXT not null,
-          year INTEGER null,
+          year INTEGER not null,
           vin TEXT null,
           plate_number TEXT not null,
           engine_type TEXT null,
           mileage INTEGER null,
           image_path TEXT,
-          user_id INTEGER null,
-          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          client_id INTEGER null,
+          FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         )
       ''');
 
     // Create Tasks table
     await db.execute('''CREATE TABLE tasks(id INTEGER PRIMARY KEY,
            name TEXT,
-            details TEXT,
+            details TEXT null,
              status Text,
-              time_start TEXT,
-               time_end TEXT,
+              start_time TEXT,
+               end_time TEXT null,
                 cost REAL,
                  vehicle_id INTEGER,
                   Foreign Key (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE)
                   ''');
 
-    // Create Users table
+    // Create Clients table
     await db.execute('''
-      CREATE TABLE users (
+      CREATE TABLE clients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         phone INTEGER NOT NULL UNIQUE
@@ -76,10 +99,10 @@ class DatabaseHelper {
         id: maps[i]['id'],
         name: maps[i]['name'],
         status: maps[i]['status'],
-        timeStart: DateTime.parse(maps[i]['time_start']),
+        timeStart: DateTime.parse(maps[i]['start_time']),
         timeEnd:
-            maps[i]['time_end'] != null
-                ? DateTime.parse(maps[i]['time_end'])
+            maps[i]['end_time'] != null
+                ? DateTime.parse(maps[i]['end_time'])
                 : null,
         cost: maps[i]['cost'],
         details: maps[i]['details'],
@@ -88,21 +111,21 @@ class DatabaseHelper {
     });
   }
 
-  Future<User> getUserById(int userId) async {
+  Future<Client> getUserById(int userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'users',
+      'clients',
       where: 'id = ?',
       whereArgs: [userId],
     );
     if (maps.isNotEmpty) {
-      return User(
+      return Client(
         id: maps[0]['id'],
         name: maps[0]['name'],
         phone: maps[0]['phone'],
       );
     }
-    throw Exception('User not found');
+    throw Exception('Client not found');
   }
 
   Future<List<Task>> getTasksByVehicleId(int vehicleId) async {
@@ -117,10 +140,10 @@ class DatabaseHelper {
         id: maps[i]['id'],
         name: maps[i]['name'],
         status: maps[i]['status'],
-        timeStart: DateTime.parse(maps[i]['time_start']),
+        timeStart: DateTime.parse(maps[i]['start_time']),
         timeEnd:
-            maps[i]['time_end'] != null
-                ? DateTime.parse(maps[i]['time_end'])
+            maps[i]['end_time'] != null
+                ? DateTime.parse(maps[i]['end_time'])
                 : null,
         cost: maps[i]['cost'],
         details: maps[i]['details'],
@@ -133,7 +156,7 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete(
       'tasks',
-      where: 'vehicle_id = ?', // Filter by vehicle ID
+      where: 'vehicle_id = ?',
       whereArgs: [vehicleId],
     );
   }
@@ -148,15 +171,17 @@ class DatabaseHelper {
     final List<Map<String, dynamic>> maps = await db.query('tasks');
     return List.generate(maps.length, (i) {
       return Task(
+        id: maps[i]["id"],
         name: maps[i]['name'],
         status: maps[i]['status'],
-        timeStart: DateTime.parse(maps[i]['time_start']),
+        timeStart: DateTime.parse(maps[i]['start_time']),
         timeEnd:
-            maps[i]['time_end'] != null
-                ? DateTime.parse(maps[i]['time_end'])
+            maps[i]['end_time'] != null
+                ? DateTime.parse(maps[i]['end_time'])
                 : null,
         cost: maps[i]['cost'],
         details: maps[i]['details'],
+        vehicleId: maps[i]['vehicle_id'],
       );
     });
   }
@@ -179,11 +204,8 @@ class DatabaseHelper {
     final db = await database;
     return await db.update(
       'tasks',
-      {
-        'status': newStatus, // Update the status field
-        'time_end': timeEnd?.toIso8601String(), // Update the time_end field
-      },
-      where: 'id = ?', // Filter by task ID
+      {'status': newStatus, 'end_time': timeEnd?.toIso8601String()},
+      where: 'id = ?',
       whereArgs: [taskId],
     );
   }
@@ -194,16 +216,16 @@ class DatabaseHelper {
   }
 
   // CRUD operations for User
-  Future<int> insertUser(User user) async {
+  Future<int> insertUser(Client user) async {
     final db = await database;
-    return await db.insert('users', user.toMap());
+    return await db.insert('clients', user.toMap());
   }
 
-  Future<List<User>> getUsers() async {
+  Future<List<Client>> getUsers() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('users');
+    final List<Map<String, dynamic>> maps = await db.query('clients');
     return List.generate(maps.length, (i) {
-      return User(
+      return Client(
         id: maps[i]['id'],
         name: maps[i]['name'],
         phone: maps[i]['phone'],
@@ -211,10 +233,10 @@ class DatabaseHelper {
     });
   }
 
-  Future<int> updateUser(User user) async {
+  Future<int> updateUser(Client user) async {
     final db = await database;
     return await db.update(
-      'users',
+      'clients',
       user.toMap(),
       where: 'id = ?',
       whereArgs: [user.id],
@@ -224,16 +246,13 @@ class DatabaseHelper {
   Future<bool> deleteUser(int id) async {
     final db = await database;
 
-    // Start a transaction to ensure atomicity
     await db.transaction((txn) async {
-      // Step 1: Fetch all vehicles associated with the user
       final List<Map<String, dynamic>> vehicleMaps = await txn.query(
         'vehicles',
-        where: 'user_id = ?',
+        where: 'client_id = ?',
         whereArgs: [id],
       );
 
-      // Step 2: Delete all tasks associated with each vehicle
       for (final vehicle in vehicleMaps) {
         final vehicleId = vehicle['id'];
         await txn.delete(
@@ -243,14 +262,12 @@ class DatabaseHelper {
         );
       }
 
-      // Step 3: Delete all vehicles associated with the user
-      await txn.delete('vehicles', where: 'user_id = ?', whereArgs: [id]);
+      await txn.delete('vehicles', where: 'client_id = ?', whereArgs: [id]);
 
-      // Step 4: Delete the user
-      await txn.delete('users', where: 'id = ?', whereArgs: [id]);
+      await txn.delete('clients', where: 'id = ?', whereArgs: [id]);
     });
 
-    return true; // Return true if the operation succeeds
+    return true;
   }
 
   // CRUD operations for Vehicle
@@ -259,21 +276,21 @@ class DatabaseHelper {
     return await db.insert('vehicles', vehicle.toMap());
   }
 
-  Future<User?> getUserByPhone(int phone) async {
+  Future<Client?> getUserByPhone(int phone) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'users',
+      'clients',
       where: 'phone = ?',
       whereArgs: [phone],
     );
     if (maps.isNotEmpty) {
-      return User(
+      return Client(
         id: maps[0]['id'],
         name: maps[0]['name'],
         phone: maps[0]['phone'],
       );
     }
-    return null; // Return null if no user is found
+    return null;
   }
 
   Future<Vehicle?> getVehicleByVin(String vin) async {
@@ -294,7 +311,7 @@ class DatabaseHelper {
         engineType: maps[0]['engine_type'],
         mileage: maps[0]['mileage'],
         imagePath: maps[0]['image_path'],
-        userId: maps[0]['user_id'],
+        clientId: maps[0]['client_id'],
       );
     }
     return null; // Return null if no vehicle is found
@@ -314,7 +331,7 @@ class DatabaseHelper {
         engineType: maps[i]['engine_type'],
         mileage: maps[i]['mileage'],
         imagePath: maps[i]['image_path'],
-        userId: maps[i]['user_id'],
+        clientId: maps[i]['client_id'],
       );
     });
   }
@@ -377,8 +394,6 @@ class DatabaseHelper {
 
     // Delete the database file
     await deleteDatabase(databasePath2);
-
-    print('Database deleted successfully');
   }
 
   Future<Vehicle?> getVehicleById(int vehicleId) async {
@@ -403,7 +418,7 @@ class DatabaseHelper {
         engineType: maps[0]['engine_type'],
         mileage: maps[0]['mileage'],
         imagePath: maps[0]['image_path'],
-        userId: maps[0]['user_id'],
+        clientId: maps[0]['client_id'],
       );
     }
 
@@ -411,10 +426,25 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<User?> getOwnerByVehicleId(int vehicleId) async {
+  Future<int> deleteAllClients() async {
+    final db = await database;
+    return await db.delete('clients');
+  }
+
+  Future<int> deleteAllVehicles() async {
+    final db = await database;
+    return await db.delete('vehicles');
+  }
+
+  Future<int> deleteAllTasks() async {
+    final db = await database;
+    return await db.delete('tasks');
+  }
+
+  Future<Client?> getOwnerByVehicleId(int vehicleId) async {
     final db = await database;
 
-    // First, get the user_id from the vehicles table
+    // First, get the client_id from the vehicles table
     final List<Map<String, dynamic>> vehicleMaps = await db.query(
       'vehicles',
       where: 'id = ?',
@@ -425,27 +455,27 @@ class DatabaseHelper {
       return null; // No vehicle found with the given ID
     }
 
-    final int? userId = vehicleMaps[0]['user_id'];
+    final int? clientId = vehicleMaps[0]['client_id'];
 
-    if (userId == null) {
-      return null; // No user_id associated with the vehicle
+    if (clientId == null) {
+      return null; // No client_id associated with the vehicle
     }
 
-    // Query the users table to get the owner
-    final List<Map<String, dynamic>> userMaps = await db.query(
-      'users',
+    // Query the clients table to get the owner
+    final List<Map<String, dynamic>> clientMaps = await db.query(
+      'clients',
       where: 'id = ?',
-      whereArgs: [userId],
+      whereArgs: [clientId],
     );
 
-    if (userMaps.isNotEmpty) {
-      return User(
-        id: userMaps[0]['id'],
-        name: userMaps[0]['name'],
-        phone: userMaps[0]['phone'],
+    if (clientMaps.isNotEmpty) {
+      return Client(
+        id: clientMaps[0]['id'],
+        name: clientMaps[0]['name'],
+        phone: clientMaps[0]['phone'],
       );
     }
 
-    return null; // No owner found
+    return null;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
-import 'package:inter_repair_car/Models/Entities/User.dart';
+import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Models/Entities/vehicle.dart';
 import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
 
@@ -9,7 +9,7 @@ class CarController extends GetxController {
 
   // Reactive variables
   var car = Rx<Vehicle?>(null); // Observable car (nullable)
-  var owner = Rx<User?>(null); // Observable owner (nullable)
+  var owner = Rx<Client?>(null); // Observable owner (nullable)
   var tasks = <Task>[].obs; // Observable tasks list
 
   // Fetch car, owner, and tasks from the database

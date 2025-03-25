@@ -8,26 +8,36 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.grey[900]!, Colors.grey[800]!.withValues(alpha: .6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Scaffold(
+      body: SizedBox.expand( // Makes container fill entire screen
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.grey[900]!, Colors.grey[800]!.withValues(alpha: .6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: .2),
+              width: 2,
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                _buildMiddleSection(),
+                // Add bottom spacer to prevent cutoff
+                SizedBox(height: MediaQuery.of(context).padding.bottom),
+              ],
+            ),
+          ),
         ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [const SizedBox(height: 24), _buildMiddleSection()],
       ),
     );
   }
 
-  // Middle Section: Control, Climate, Interior Temperature
   Widget _buildMiddleSection() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -39,56 +49,39 @@ class HomeView extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // New Button for Ongoing Tasks Page
-              TaskNavigator(
-                icon: FontAwesomeIcons.car,
-                title: "Cars",
-                onTap: () {
-                  Get.toNamed('/carsList'); // Navigate to the new page
-                },
-              ),
-              const SizedBox(height: 12),
-              // On going tasks
-              TaskNavigator(
-                icon: FontAwesomeIcons.listCheck,
-                title: "Ongoing Tasks",
-                onTap: () {
-                  Get.toNamed("/typeTask", arguments: "onGoing");
-                },
-              ),
-              const SizedBox(height: 12),
-              // Pending tasks
-              TaskNavigator(
-                icon: FontAwesomeIcons.clock,
-                title: "Pending Tasks",
-                onTap: () {
-                  Get.toNamed("/typeTask", arguments: "pending");
-                },
-              ),
-              const SizedBox(height: 12),
-              // Completed tasks
-              TaskNavigator(
-                icon: FontAwesomeIcons.check,
-                title: "Completed Tasks",
-                onTap: () {
-                  Get.toNamed("/typeTask", arguments: "completed");
-                },
-              ),
-              const SizedBox(height: 12),
-              // Clients
-              TaskNavigator(
-                icon: FontAwesomeIcons.userGroup,
-                title: "Clients",
-                onTap: () {
-                  Get.toNamed("/clientList");
-                },
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TaskNavigator(
+              icon: FontAwesomeIcons.car,
+              title: "Cars",
+              onTap: () => Get.toNamed('/carsList'),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.listCheck,
+              title: "Ongoing Tasks",
+              onTap: () => Get.toNamed("/typeTask", arguments: "onGoing"),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.clock,
+              title: "Pending Tasks",
+              onTap: () => Get.toNamed("/typeTask", arguments: "pending"),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.check,
+              title: "Completed Tasks",
+              onTap: () => Get.toNamed("/typeTask", arguments: "completed"),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.userGroup,
+              title: "Clients",
+              onTap: () => Get.toNamed("/clientList"),
+            ),
+          ],
         ),
       ),
     );
