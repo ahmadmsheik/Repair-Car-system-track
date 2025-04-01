@@ -15,6 +15,18 @@ class CarListingController extends GetxController {
     fetchVehicles(); // Fetch vehicles when the controller is initialized
   }
 
+  Future<void> fetchVehiclesByClient(int clientId) async {
+    isLoading.value = true;
+    try {
+      final vehicles = await DatabaseHelper().getVehiclesByClientId(clientId);
+      filteredVehicles.assignAll(vehicles);
+    } catch (e) {
+      Get.snackbar("Error", "Failed to load vehicles");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Fetch vehicles from the database
   Future<void> fetchVehicles() async {
     isLoading(true);

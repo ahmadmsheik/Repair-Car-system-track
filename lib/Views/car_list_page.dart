@@ -8,9 +8,17 @@ class CarListPage extends StatelessWidget {
     CarListingController(),
   );
   final TextEditingController _searchController = TextEditingController();
+  final int? clientId; // Add this parameter
+
+  CarListPage({super.key, this.clientId});
 
   @override
   Widget build(BuildContext context) {
+    if (clientId != null) {
+      carListingController.fetchVehiclesByClient(clientId!);
+    } else {
+      carListingController.fetchVehicles();
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey[850]!,

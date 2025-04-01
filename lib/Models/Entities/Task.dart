@@ -3,13 +3,14 @@ import 'dart:convert';
 enum Status { pending, completed, onGoing }
 
 class Task {
-  final int? id;
+  int? id;
   final String name;
   final String status;
   final DateTime timeStart;
   final DateTime? timeEnd;
   final double cost;
   final String? details;
+  final int? currentMileage;
   final int? vehicleId;
 
   Task({
@@ -19,6 +20,7 @@ class Task {
     required this.timeStart,
     this.timeEnd,
     required this.cost,
+    this.currentMileage,
     this.details,
     this.vehicleId,
   });
@@ -31,9 +33,14 @@ class Task {
       'start_time': timeStart.toIso8601String(),
       'end_time': timeEnd?.toIso8601String(),
       'cost': cost,
+      'current_mileage': currentMileage,
       'details': details,
       'vehicle_id': vehicleId,
     };
+  }
+
+  set setId(int? value) {
+    id = value;
   }
 
   String toJson() => json.encode(toMap());
@@ -49,6 +56,7 @@ class Task {
         json['end_time'] != null
             ? DateTime.parse((json['end_time'] as String).replaceAll(' ', 'T'))
             : null,
+    currentMileage: json['current_mileage'] as int?,
     cost: (json['cost'] as num).toDouble(),
     details: json['details']?.toString(),
     vehicleId: json['vehicle_id'] as int,

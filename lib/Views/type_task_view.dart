@@ -165,7 +165,7 @@ class _TypeTaskViewState extends State<TypeTaskView> {
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
                       onPressed: () {
-                        _showEditBottomSheet(context, task);
+                        _showEditTaskPage(context, task);
                       },
                     ),
                     IconButton(
@@ -203,8 +203,99 @@ class _TypeTaskViewState extends State<TypeTaskView> {
             if (task.timeEnd != null)
               _buildDetailItem('End Time', task.timeEnd.toString()),
             _buildDetailItem('Cost', '\$${task.cost.toStringAsFixed(2)}'),
+            if (task.currentMileage != null)
+              _buildDetailItem(
+                'Current Mileage',
+                "${task.currentMileage.toString()} km",
+              ),
             if (task.details != null)
               _buildDetailItem('Details', task.details!),
+
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: DatabaseHelper().getPartsByTask(task.id!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+
+                if (snapshot.hasError ||
+                    !snapshot.hasData ||
+                    snapshot.data!.isEmpty) {
+                  return const SizedBox(); // Return empty if no parts
+                }
+
+                final parts = snapshot.data!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(color: Colors.white54),
+                    const Text(
+                      'Parts Used:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...parts.map(
+                      (part) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.arrow_right,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${part['name']} (${part['supplier']})',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            Text(
+                              '\$${double.parse(part['price'].toString()).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Total Parts: \$${_calculatePartsTotal(parts).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            // Inside _buildTaskCard, after the "Mark as Completed" button
+            if (task.status == "pending") const SizedBox(height: 8),
+            if (task.status == "pending")
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    _markAsOngoing(context, task);
+                  },
+                  child: const Text("Mark as Ongoing"),
+                ),
+              ),
             // "Mark as Completed" button for ongoing tasks
             if (task.status == "onGoing") const SizedBox(height: 8),
             if (task.status == "onGoing")
@@ -229,163 +320,42 @@ class _TypeTaskViewState extends State<TypeTaskView> {
   }
 
   // Helper method to show the edit bottom sheet
-  void _showEditBottomSheet(BuildContext context, Task task) {
-    controller.nameController = TextEditingController(text: task.name);
-    controller.costController = TextEditingController(
-      text: task.cost.toString(),
+  void _showEditTaskPage(BuildContext context, Task task) {
+    Get.toNamed(
+      '/editTaskPage',
+      arguments: {'task': task, 'taskStatus': widget.typeTask},
     );
-    controller.detailsController = TextEditingController(text: task.details);
+  }
 
-    // Dropdown value for status
-    String selectedStatus = task.status;
-
-    showModalBottomSheet(
+  // Helper method to mark a task as ongoing
+  void _markAsOngoing(BuildContext context, Task task) {
+    showDialog(
       context: context,
-      isScrollControlled: true,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+        return AlertDialog(
+          title: const Text("Mark as Ongoing"),
+          content: const Text(
+            "Are you sure you want to mark this task as ongoing?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.white),
               ),
-              child: Container(
-                color: Colors.blueGrey[800],
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: controller.taskUpdateKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Edit Task Details",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Task Name is required';
-                          }
-                          return null;
-                        },
-                        controller: controller.nameController,
-                        decoration: const InputDecoration(
-                          labelText: "Name",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Status dropdown
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: .2),
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                            child: DropdownButton<String>(
-                              value: selectedStatus,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "onGoing",
-                                  child: Text("ONGOING"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "pending",
-                                  child: Text("PENDING"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "completed",
-                                  child: Text("COMPLETED"),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedStatus = value!;
-                                });
-                              },
-                              dropdownColor: Colors.blueGrey[800],
-                              style: const TextStyle(color: Colors.white),
-                              underline: Container(),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Cost is required';
-                                }
-                                if (double.tryParse(value) == null) {
-                                  return 'Enter valid number';
-                                }
-                                return null;
-                              },
-                              keyboardType: TextInputType.number,
-                              controller: controller.costController,
-                              decoration: const InputDecoration(
-                                labelText: "Cost",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: controller.detailsController,
-                        decoration: const InputDecoration(
-                          labelText: "Details",
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () async {
-                          if (controller.taskUpdateKey.currentState!
-                              .validate()) {
-                            final updatedTask = Task(
-                              id: task.id,
-                              name: controller.nameController.text,
-                              status: selectedStatus,
-                              timeStart: task.timeStart,
-                              timeEnd: task.timeEnd,
-                              cost: double.parse(
-                                controller.costController.text,
-                              ),
-                              details: controller.detailsController.text,
-                              vehicleId: task.vehicleId,
-                            );
-
-                            // Update the task in the database
-                            await _taskController.updateTask(updatedTask, widget.typeTask);
-
-                            // Close the bottom sheet
-                            Get.back();
-                          }
-                        },
-                        child: const Text(
-                          "Save Changes",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _taskController.markTaskAsOngoing(task.id!, widget.typeTask);
+              },
+              child: const Text(
+                "Confirm",
+                style: TextStyle(color: Colors.white),
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -477,5 +447,9 @@ class _TypeTaskViewState extends State<TypeTaskView> {
         );
       },
     );
+  }
+
+  double _calculatePartsTotal(List<Map<String, dynamic>> parts) {
+    return parts.fold(0.0, (sum, part) => sum + (part['price'] as double));
   }
 }

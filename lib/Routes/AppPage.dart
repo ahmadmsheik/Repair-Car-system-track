@@ -1,12 +1,15 @@
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Routes/AppRoutes.dart';
+import 'package:inter_repair_car/Views/EditTaskPage.dart';
 import 'package:inter_repair_car/Views/adding_a_vehicle_with_task_view.dart';
 import 'package:inter_repair_car/Views/car_detail_page.dart';
 import 'package:inter_repair_car/Views/car_list_page.dart';
+import 'package:inter_repair_car/Views/expenditures_page.dart';
 import 'package:inter_repair_car/Views/home_view.dart';
 import 'package:inter_repair_car/Views/register_view.dart';
 import 'package:inter_repair_car/Views/settings_view.dart';
 import 'package:inter_repair_car/Views/sign_in_view.dart';
+import 'package:inter_repair_car/Views/statistics_page.dart';
 import 'package:inter_repair_car/Views/type_task_view.dart';
 import 'package:inter_repair_car/Views/user_list_view.dart';
 
@@ -27,5 +30,18 @@ class Apppage {
       name: Approutes.addtaskPage,
       page: () => AddingAVehicleWithTaskView(),
     ),
+    GetPage(
+      name: Approutes.editTaskPage,
+      page:
+          () => EditTaskPage(
+            task: Get.arguments['task'],
+            typeTask: Get.arguments['taskStatus'],
+          ),
+    ),
+    GetPage(
+      name: Approutes.expenditurePage,
+      page: () => const ExpendituresPage(),
+    ),
+    GetPage(name: Approutes.statisticsPage, page: () => StatisticsPage()),
   ];
 }

@@ -4,7 +4,10 @@ import 'package:inter_repair_car/Controllers/add_task_to_vehicle_controller.dart
 import 'package:inter_repair_car/Controllers/car_controller.dart';
 import 'package:inter_repair_car/Controllers/car_listing_controller.dart';
 import 'package:inter_repair_car/Controllers/vehicle_update_controller.dart';
+import 'package:inter_repair_car/Models/Entities/Part.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
+import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
+import 'package:inter_repair_car/Widgets/car_cart.dart';
 
 final VehicleUpdateController vehicleUpdateController = Get.put(
   VehicleUpdateController(),
@@ -41,6 +44,10 @@ class CarDetailPage extends StatelessWidget {
           return Center(child: Text('No data found'));
         }
 
+        final ongoingTasksCost = tasks
+            .where((task) => task.status == "onGoing")
+            .fold(0.0, (sum, task) => sum + task.cost);
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -61,6 +68,30 @@ class CarDetailPage extends StatelessWidget {
               (car.mileage == null)
                   ? Text("No mileage specified")
                   : _buildDetailItem('Mileage', car.mileage.toString()),
+
+              if (ongoingTasksCost > 0)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Total Ongoing Tasks Cost: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      Text(
+                        '\$${ongoingTasksCost.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 20),
               const Text(
                 'Owner Details',
@@ -76,6 +107,14 @@ class CarDetailPage extends StatelessWidget {
                     'Tasks',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+                  if (carController.tasks.any((t) => t.status == "onGoing"))
+                    TextButton(
+                      onPressed: _completeAllOngoingTasks,
+                      child: const Text(
+                        'Complete All Ongoing',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                    ),
                   IconButton(
                     onPressed: () async {
                       showModalBottomSheet(
@@ -213,6 +252,52 @@ class CarDetailPage extends StatelessWidget {
                                                 ),
                                               ),
                                             ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          TextFormField(
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return null;
+                                              }
+                                              final double? mileage =
+                                                  double.tryParse(value);
+                                              if (mileage == null ||
+                                                  mileage < 0) {
+                                                return 'Please enter a valid mileage';
+                                              }
+                                              return null;
+                                            },
+                                            controller:
+                                                addTaskController
+                                                    .taskCurrentMileageController,
+                                            keyboardType: TextInputType.number,
+                                            decoration: InputDecoration(
+                                              labelText: 'Mileage',
+                                              iconColor: Colors.white,
+                                              hintText:
+                                                  'Current mileage of the vehicle in km.',
+                                              hintStyle: TextStyle(
+                                                color: Colors.white.withValues(
+                                                  alpha: .5,
+                                                ),
+                                              ),
+                                              labelStyle: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                              focusColor: Colors.white,
+                                              focusedBorder:
+                                                  const OutlineInputBorder(
+                                                    borderSide: BorderSide(
+                                                      color: Colors.white,
+                                                      width: 2.0,
+                                                    ), // Change color here
+                                                  ),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
+                                              ),
+                                            ),
                                           ),
                                           SizedBox(height: 12),
                                           Row(
@@ -390,6 +475,104 @@ class CarDetailPage extends StatelessWidget {
                                             ),
                                           ),
                                           SizedBox(height: 20),
+
+                                          SizedBox(height: 24),
+                                          Divider(color: Colors.white54),
+                                          Text(
+                                            'Parts Used',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(height: 12),
+                                          Obx(() {
+                                            final parts = carController.parts;
+                                            if (parts.isEmpty) {
+                                              return Column(
+                                                children: [
+                                                  Text(
+                                                    'No parts added yet',
+                                                    style: TextStyle(
+                                                      color: Colors.white70,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 12),
+                                                  ElevatedButton(
+                                                    onPressed:
+                                                        () =>
+                                                            _showAddPartDialog(
+                                                              context,
+                                                              setModelState,
+                                                            ),
+                                                    child: Text(
+                                                      'Add Part',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            }
+
+                                            return Column(
+                                              children: [
+                                                ...parts.map(
+                                                  (part) => ListTile(
+                                                    title: Text(
+                                                      part.name,
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    subtitle: Text(
+                                                      '${part.supplier} - \$${part.price.toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        color: Colors.white70,
+                                                      ),
+                                                    ),
+                                                    trailing: IconButton(
+                                                      icon: Icon(
+                                                        Icons.delete,
+                                                        color: Colors.red,
+                                                      ),
+                                                      onPressed: () {
+                                                        carController.parts
+                                                            .remove(part);
+                                                        setModelState(() {});
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(height: 12),
+                                                Text(
+                                                  'Total Parts Cost: \$${_calculatePartsTotal(parts.map((p) => p.toMap()).toList()).toStringAsFixed(2)}',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 12),
+                                                ElevatedButton(
+                                                  onPressed:
+                                                      () => _showAddPartDialog(
+                                                        context,
+                                                        setModelState,
+                                                      ),
+                                                  child: Text(
+                                                    'Add Another Part',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }),
+                                          SizedBox(height: 20),
+
                                           ElevatedButton(
                                             child: Text(
                                               'Save Task',
@@ -437,16 +620,49 @@ class CarDetailPage extends StatelessWidget {
                                                                 .taskCostController
                                                                 .text,
                                                           ),
+                                                  currentMileage:
+                                                      addTaskController
+                                                              .taskCurrentMileageController
+                                                              .text
+                                                              .isEmpty
+                                                          ? null
+                                                          : int.tryParse(
+                                                            addTaskController
+                                                                .taskCurrentMileageController
+                                                                .text,
+                                                          ),
                                                   vehicleId: car.id,
                                                 );
+
+                                                carController.fetchData(carId);
 
                                                 // 🔥 Refresh the vehicle list to update the UI
                                                 Get.find<CarListingController>()
                                                     .fetchVehicles();
 
-                                                await carController.addTask(
-                                                  newTask,
-                                                );
+                                                final taskId =
+                                                    await carController.addTask(
+                                                      newTask,
+                                                    );
+
+                                                if (carController
+                                                    .parts
+                                                    .isNotEmpty) {
+                                                  // Save all parts with the correct taskId
+                                                  for (final part
+                                                      in carController.parts) {
+                                                    await dbHelper.insertPart(
+                                                      name: part.name,
+                                                      supplier: part.supplier,
+                                                      price: part.price,
+                                                      taskId: taskId,
+                                                    );
+                                                  }
+                                                }
+
+                                                addTaskController.clearFields();
+                                                carController.parts.clear();
+
                                                 Get.back();
                                               }
                                             },
@@ -684,6 +900,7 @@ class CarDetailPage extends StatelessWidget {
                               final CarListingController carListingController =
                                   Get.find();
                               await carListingController.fetchVehicles();
+
                               Get.back();
 
                               // Show a SnackBar to confirm the update
@@ -744,10 +961,227 @@ class CarDetailPage extends StatelessWidget {
                   ? task.timeEnd.toString()
                   : 'Not finished yet',
             ),
+            _buildDetailItem('Mileage', '${task.currentMileage ?? 'N/A'} km'),
             _buildDetailItem('Cost', '\$${task.cost.toStringAsFixed(2)}'),
+
+            // Add parts section
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: DatabaseHelper().getPartsByTask(task.id!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+
+                if (snapshot.hasError ||
+                    !snapshot.hasData ||
+                    snapshot.data!.isEmpty) {
+                  return const SizedBox();
+                }
+
+                final parts = snapshot.data!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Divider(color: Colors.white54),
+                    const Text(
+                      'Parts Used:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...parts.map(
+                      (part) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.arrow_right,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${part['name']} (${part['supplier']})',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            Text(
+                              '\$${double.parse(part['price'].toString()).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Total Parts: \$${_calculatePartsTotal(parts).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  double _calculatePartsTotal(List<Map<String, dynamic>> parts) {
+    return parts.fold(0.0, (sum, part) => sum + (part['price'] as double));
+  }
+
+  void _completeAllOngoingTasks() async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text("Complete All Ongoing Tasks"),
+        content: const Text(
+          "Are you sure you want to mark all ongoing tasks as completed?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text("Confirm", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final ongoingTasks =
+          carController.tasks.where((t) => t.status == "onGoing").toList();
+      for (final task in ongoingTasks) {
+        await DatabaseHelper().updateTaskStatus(
+          task.id!,
+          "completed",
+          DateTime.now(),
+        );
+      }
+      carController.fetchData(carController.car.value!.id!);
+    }
+  }
+
+  void _showAddPartDialog(BuildContext context, StateSetter setModelState) {
+    final partNameController = TextEditingController();
+    final partSupplierController = TextEditingController();
+    final partPriceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.blueGrey[800],
+          title: Text('Add New Part', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: partNameController,
+                decoration: InputDecoration(
+                  labelText: 'Part Name*',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white, width: 2),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: partSupplierController,
+                decoration: InputDecoration(
+                  labelText: 'Supplier*',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white, width: 2),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: partPriceController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Price*',
+                  prefixText: '\$',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white, width: 2),
+                  ),
+                ),
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+            ),
+            TextButton(
+              onPressed: () {
+                if (partNameController.text.isNotEmpty &&
+                    partSupplierController.text.isNotEmpty &&
+                    partPriceController.text.isNotEmpty) {
+                  final price = double.tryParse(partPriceController.text);
+                  if (price != null && price > 0) {
+                    carController.parts.add(
+                      Part(
+                        name: partNameController.text,
+                        supplier: partSupplierController.text,
+                        price: price,
+                        taskId: 0, // Will be updated when task is saved
+                      ),
+                    );
+                    setModelState(() {}); // Update the UI
+                    Get.back();
+                  } else {
+                    Get.snackbar(
+                      'Invalid Price',
+                      'Please enter a valid price greater than 0',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                } else {
+                  Get.snackbar(
+                    'Missing Information',
+                    'Please fill all fields',
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
+              },
+              child: Text('Add', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

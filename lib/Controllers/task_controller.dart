@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
 import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
@@ -12,6 +13,38 @@ class TaskController extends GetxController {
   Future<void> fetchTasksByStatus(String status) async {
     final taskList = await _databaseHelper.getTasksByStatus(status);
     tasks.assignAll(taskList); // Update the observable list
+  }
+
+  // In your TaskController class
+  Future<void> refreshTasks(String status) async {
+    await fetchTasksByStatus(status);
+  }
+
+  Future<void> markTaskAsOngoing(int taskId, String currentStatus) async {
+    try {
+      final dbHelper = DatabaseHelper();
+      await dbHelper.updateTaskStatus(
+        taskId,
+        'onGoing',
+        null, // No end time for ongoing tasks
+      );
+
+      // Refresh the tasks list
+      if (currentStatus == 'pending') {
+        await fetchTasksByStatus('pending');
+      } else if (currentStatus == 'onGoing') {
+        await fetchTasksByStatus('onGoing');
+      } else if (currentStatus == 'completed') {
+        await fetchTasksByStatus('completed');
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to update task status",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   // Add a new task

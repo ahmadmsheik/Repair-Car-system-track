@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inter_repair_car/Models/Entities/Part.dart';
 
 import 'package:inter_repair_car/Models/Entities/Task.dart';
 
@@ -33,4 +34,13 @@ class AddTaskController extends GetxController {
   final TextEditingController costController = TextEditingController();
 
   final TextEditingController detailsController = TextEditingController();
+
+    final TextEditingController currentTaskMileage = TextEditingController();
+
+  // Add to your AddTaskController
+  RxList<Part> parts = <Part>[].obs;
+  var showPartFields = false.obs;
+  final partNameController = TextEditingController();
+  final partSupplierController = TextEditingController();
+  final partPriceController = TextEditingController();
 }

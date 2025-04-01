@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inter_repair_car/Models/Entities/Part.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
 import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Models/Entities/vehicle.dart';
@@ -11,6 +13,15 @@ class CarController extends GetxController {
   var car = Rx<Vehicle?>(null); // Observable car (nullable)
   var owner = Rx<Client?>(null); // Observable owner (nullable)
   var tasks = <Task>[].obs; // Observable tasks list
+  RxList<Part> parts = <Part>[].obs;
+  var showPartFields = false.obs;
+  final partNameController = TextEditingController();
+  final partSupplierController = TextEditingController();
+  final partPriceController = TextEditingController();
+
+  List<Map<String, dynamic>> get partsAsMap {
+    return parts.map((part) => part.toMap()).toList();
+  }
 
   // Fetch car, owner, and tasks from the database
   Future<void> fetchData(int carId) async {
@@ -40,8 +51,10 @@ class CarController extends GetxController {
   }
 
   // Add a new task to the database and UI
-  Future<void> addTask(Task newTask) async {
-    await dbHelper.insertTask(newTask);
+  Future<int> addTask(Task newTask) async {
+    final taskId = await dbHelper.insertTask(newTask);
+    newTask.setId = taskId;
     tasks.add(newTask); // Update the observable tasks list
+    return taskId; // Return the new task ID
   }
 }

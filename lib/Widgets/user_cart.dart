@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:inter_repair_car/Controllers/user_controller.dart';
 import 'package:inter_repair_car/Controllers/user_update_controller.dart';
 import 'package:inter_repair_car/Models/Entities/Client.dart';
+import 'package:inter_repair_car/Views/car_list_page.dart';
 
 final UserUpdateController updateController = UserUpdateController();
 
@@ -17,79 +18,85 @@ class UserCart extends StatelessWidget {
   Widget build(BuildContext context) {
     final UserController userController = Get.find<UserController>();
 
-    return Dismissible(
-      key: Key(client.id.toString()), // Unique key for the Dismissible widget
-      direction:
-          DismissDirection.horizontal, // Allow both left and right swipes
-      background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.blue, // Blue background for the edit action
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        child: const Icon(Icons.edit, color: Colors.white, size: 30),
-      ),
-      secondaryBackground: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.red, // Red background for the delete action
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete, color: Colors.white, size: 30),
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          // Swipe left (delete)
-          return await _confirmDelete(context, userController);
-        } else if (direction == DismissDirection.startToEnd) {
-          // Swipe right (edit)
-          _showEditBottomSheet(context, userController);
-          return false; // Don't dismiss the widget
-        }
-        return false;
+    return GestureDetector(
+      onTap: () {
+        // Navigate to CarListPage and filter by this client's vehicles
+        Get.to(() => CarListPage(clientId: client.id!));
       },
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.grey[900]!, Colors.grey[800]!.withValues(alpha: .6)],
+      child: Dismissible(
+        key: Key(client.id.toString()),
+        direction: DismissDirection.horizontal,
+        background: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            borderRadius: BorderRadius.circular(10),
           ),
-          borderRadius: BorderRadius.circular(10),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 20),
+          child: const Icon(Icons.edit, color: Colors.white, size: 30),
         ),
-        height: 100,
-        width: double.infinity,
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        padding: const EdgeInsets.fromLTRB(7, 0, 20, 0),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              Text(
-                client.name,
-                style: GoogleFonts.montserrat(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+        secondaryBackground: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          child: const Icon(Icons.delete, color: Colors.white, size: 30),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            return await _confirmDelete(context, userController);
+          } else if (direction == DismissDirection.startToEnd) {
+            _showEditBottomSheet(context, userController);
+            return false;
+          }
+          return false;
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.grey[900]!,
+                Colors.grey[800]!.withValues(alpha: .6),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          height: 100,
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(7, 0, 20, 0),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                Text(
+                  client.name,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                client.phone.toString(),
-                style: GoogleFonts.montserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: const Color.fromARGB(95, 255, 255, 255),
+                const SizedBox(height: 8),
+                Text(
+                  client.phone.toString(),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: const Color.fromARGB(95, 255, 255, 255),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -14,6 +14,7 @@ import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
 import 'package:inter_repair_car/Widgets/phone_number_formatter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:inter_repair_car/Models/Entities/Part.dart';
 
 class AddingAVehicleWithTaskView extends StatefulWidget {
   const AddingAVehicleWithTaskView({super.key});
@@ -616,6 +617,7 @@ class _AddingAVehicleWithTaskViewState
                                   ),
                                 ),
                               ),
+
                               const SizedBox(width: 12),
                               Expanded(
                                 flex: 1,
@@ -656,6 +658,40 @@ class _AddingAVehicleWithTaskViewState
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null;
+                              }
+                              final double? mileage = double.tryParse(value);
+                              if (mileage == null || mileage < 0) {
+                                return 'Please enter a valid mileage';
+                              }
+                              return null;
+                            },
+                            controller: controller.currentTaskMileage,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Current mileage',
+                              iconColor: Colors.white,
+                              hintText: 'Current mileage of the vehicle in km.',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: .5),
+                              ),
+                              labelStyle: const TextStyle(color: Colors.white),
+                              focusColor: Colors.white,
+                              focusedBorder: const OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.white,
+                                  width: 2.0,
+                                ), // Change color here
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -789,6 +825,249 @@ class _AddingAVehicleWithTaskViewState
                               ),
                             ),
                           ),
+
+                          const SizedBox(height: 24),
+
+                          Obx(
+                            () => Column(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    controller.showPartFields.toggle();
+                                  },
+                                  child: Text(
+                                    controller.showPartFields.value
+                                        ? 'Hide Parts'
+                                        : 'Add Parts to Task',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                if (controller.showPartFields.value) ...[
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Parts Used in This Task',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: controller.partNameController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Part Name*',
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(
+                                          color: Colors.white,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller:
+                                        controller.partSupplierController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Supplier*',
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(
+                                          color: Colors.white,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: controller.partPriceController,
+                                    keyboardType: TextInputType.number,
+
+                                    decoration: InputDecoration(
+                                      labelText: 'Price*',
+                                      prefixText: '\$',
+                                      prefixStyle: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(
+                                          color: Colors.white,
+                                          width: 2.0,
+                                        ),
+                                      ),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Validate all fields
+                                      if (controller
+                                          .partNameController
+                                          .text
+                                          .isEmpty) {
+                                        Get.snackbar(
+                                          'Missing Information',
+                                          'Please enter a part name',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.red[800],
+                                          colorText: Colors.white,
+                                          duration: const Duration(seconds: 2),
+                                        );
+                                        return;
+                                      }
+
+                                      if (controller
+                                          .partSupplierController
+                                          .text
+                                          .isEmpty) {
+                                        Get.snackbar(
+                                          'Missing Information',
+                                          'Please enter a supplier',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.red[800],
+                                          colorText: Colors.white,
+                                          duration: const Duration(seconds: 2),
+                                        );
+                                        return;
+                                      }
+
+                                      if (controller
+                                          .partPriceController
+                                          .text
+                                          .isEmpty) {
+                                        Get.snackbar(
+                                          'Missing Information',
+                                          'Please enter a price',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.red[800],
+                                          colorText: Colors.white,
+                                          duration: const Duration(seconds: 2),
+                                        );
+                                        return;
+                                      }
+
+                                      final price = double.tryParse(
+                                        controller.partPriceController.text,
+                                      );
+                                      if (price == null || price <= 0) {
+                                        Get.snackbar(
+                                          'Invalid Price',
+                                          'Please enter a valid price greater than 0',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: Colors.red[800],
+                                          colorText: Colors.white,
+                                          duration: const Duration(seconds: 2),
+                                        );
+                                        return;
+                                      }
+
+                                      // All validations passed - add the part
+                                      final part = Part(
+                                        name:
+                                            controller.partNameController.text,
+                                        supplier:
+                                            controller
+                                                .partSupplierController
+                                                .text,
+                                        price: price,
+                                        taskId:
+                                            0, // Will be updated when task is created
+                                      );
+
+                                      controller.parts.add(part);
+                                      controller.partNameController.clear();
+                                      controller.partSupplierController.clear();
+                                      controller.partPriceController.clear();
+                                    },
+                                    child: const Text(
+                                      'Add Part',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (controller.parts.isNotEmpty) ...[
+                                    const Text(
+                                      'Added Parts:',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ...controller.parts.map(
+                                      (part) => Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blueGrey[900]!
+                                              .withValues(alpha: 0.6),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: .2,
+                                              ),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        margin: const EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        child: ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                              ),
+                                          title: Text(
+                                            part.name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          subtitle: Text(
+                                            '${part.supplier} - \$${part.price.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.8,
+                                              ),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          trailing: IconButton(
+                                            icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.redAccent,
+                                            ),
+                                            onPressed:
+                                                () => controller.parts.remove(
+                                                  part,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ],
+                            ),
+                          ),
+
                           const SizedBox(height: 24),
                           const Divider(height: 1, color: Colors.white),
                           const SizedBox(height: 12),
@@ -812,11 +1091,9 @@ class _AddingAVehicleWithTaskViewState
                                 onPressed: () async {
                                   if (controller.formKey.currentState!
                                       .validate()) {
-                                    // Validate the form
                                     final dbHelper = DatabaseHelper();
 
                                     try {
-                                      // Save the image permanently if an image is selected
                                       String? savedImagePath;
                                       if (_imageFile != null) {
                                         savedImagePath =
@@ -948,20 +1225,41 @@ class _AddingAVehicleWithTaskViewState
                                         cost: double.parse(
                                           controller.costController.text,
                                         ),
+                                        currentMileage: int.tryParse(
+                                          controller.currentTaskMileage.text,
+                                        ),
                                         vehicleId: vehicleId,
                                         details:
                                             controller.detailsController.text,
                                       );
-                                      await dbHelper.insertTask(task);
+                                      final int taskId = await dbHelper
+                                          .insertTask(task);
+
+                                      if (controller.parts.isNotEmpty) {
+                                        // Save all parts with the correct taskId
+                                        for (final part in controller.parts) {
+                                          await dbHelper.insertPart(
+                                            name: part.name,
+                                            supplier: part.supplier,
+                                            price: part.price,
+                                            taskId: taskId,
+                                          );
+                                        }
+                                      }
+
+                                      // Clear parts list after successful save
+                                      controller.parts.clear();
 
                                       // Show success message and close the bottom sheet
-                                      Get.back();
-                                      Get.back();
+
                                       _imageFile = null;
                                       Get.snackbar(
                                         'Success',
                                         'Data saved successfully!',
                                       );
+
+                                      Get.back();
+                                      Get.back();
                                     } catch (e) {
                                       // Handle any errors
                                       Get.snackbar(

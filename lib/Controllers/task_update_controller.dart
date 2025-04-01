@@ -8,5 +8,8 @@ class TaskUpdateController extends GetxController {
 
   TextEditingController detailsController = TextEditingController();
 
+  TextEditingController currentMileage = TextEditingController();
+
   final GlobalKey<FormState> taskUpdateKey = GlobalKey<FormState>();
+  
 }

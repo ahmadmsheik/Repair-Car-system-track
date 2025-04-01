@@ -9,11 +9,15 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SizedBox.expand( // Makes container fill entire screen
+      body: SizedBox.expand(
+        // Makes container fill entire screen
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.grey[900]!, Colors.grey[800]!.withValues(alpha: .6)],
+              colors: [
+                Colors.grey[900]!,
+                Colors.grey[800]!.withValues(alpha: .6),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -80,6 +84,18 @@ class HomeView extends StatelessWidget {
               icon: FontAwesomeIcons.userGroup,
               title: "Clients",
               onTap: () => Get.toNamed("/clientList"),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.moneyBillWave,
+              title: "Expenditures",
+              onTap: () => Get.toNamed("/expenditurePage"),
+            ),
+            const SizedBox(height: 12),
+            TaskNavigator(
+              icon: FontAwesomeIcons.chartPie,
+              title: "Statistics",
+              onTap: () => Get.toNamed("/statisticsPage"),
             ),
           ],
         ),

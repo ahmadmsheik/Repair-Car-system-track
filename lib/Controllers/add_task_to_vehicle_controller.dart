@@ -8,9 +8,19 @@ class AddTaskToVehicleController {
   final TextEditingController taskTimeStartController = TextEditingController();
   final TextEditingController taskTimeEndController = TextEditingController();
   final TextEditingController taskCostController = TextEditingController();
+  final TextEditingController taskCurrentMileageController = TextEditingController();
 
   TimeOfDay selectedStartTime = TimeOfDay.now();
   Status taskStatusSelected = Status.onGoing;
 
   final GlobalKey<FormState> addTaskKey = GlobalKey<FormState>();
+
+  void clearFields() {
+    taskNameController.clear();
+    taskDetailsController.clear();
+    taskTimeStartController.clear();
+    taskTimeEndController.clear();
+    taskCostController.clear();
+    taskCurrentMileageController.clear();
+  }
 }
