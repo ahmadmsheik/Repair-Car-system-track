@@ -5,7 +5,6 @@ import 'package:inter_repair_car/Models/Entities/Expenditure.dart';
 class ExpenditureController extends GetxController {
   // Form key
   final formKey = GlobalKey<FormState>();
-
   // Text editing controllers
   final nameController = TextEditingController();
   final amountController = TextEditingController();
@@ -24,8 +23,6 @@ class ExpenditureController extends GetxController {
       amountController.text = expenditure.amount.toString();
       descriptionController.text = expenditure.description ?? '';
       dueDate.value = expenditure.dueDate;
-    } else {
-      clearForm();
     }
   }
 
@@ -42,6 +39,7 @@ class ExpenditureController extends GetxController {
     amountController.clear();
     descriptionController.clear();
     dueDate.value = null;
+    update();
   }
 
   // Validate and return expenditure

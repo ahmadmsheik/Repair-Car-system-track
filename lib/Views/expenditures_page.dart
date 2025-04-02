@@ -39,14 +39,16 @@ class _ExpendituresPageState extends State<ExpendituresPage> {
   }
 
   void _showAddExpenditureSheet() {
-    _expenditureController.clearForm(); // Clear form for new entry
-    Get.bottomSheet(
-      AddExpenditureSheet(
-        onSave: (newExpenditure) async {
-          await _dbHelper.insertExpenditure(newExpenditure);
-          _loadExpenditures();
-        },
-      ),
+    // _expenditureController.clearForm(); // Clear form for new entry
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (context) => AddExpenditureSheet(
+            onSave: (newExpenditure) async {
+              await _dbHelper.insertExpenditure(newExpenditure);
+              _loadExpenditures();
+            },
+          ),
       isScrollControlled: true,
     );
   }
@@ -55,15 +57,16 @@ class _ExpendituresPageState extends State<ExpendituresPage> {
     _expenditureController.initExpenditure(
       expenditure,
     ); // Initialize with existing data
-    Get.bottomSheet(
-      AddExpenditureSheet(
-        onSave: (updatedExpenditure) async {
-          await _dbHelper.updateExpenditure(updatedExpenditure);
-          _loadExpenditures();
-        },
-        existingExpenditure: expenditure,
-      ),
-      isScrollControlled: true,
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (context) => AddExpenditureSheet(
+            onSave: (updatedExpenditure) async {
+              await _dbHelper.updateExpenditure(updatedExpenditure);
+              _loadExpenditures();
+            },
+            existingExpenditure: expenditure,
+          ),
     );
   }
 
@@ -105,7 +108,10 @@ class _ExpendituresPageState extends State<ExpendituresPage> {
               : _expenditures.isEmpty
               ? const Center(child: Text('No expenditures found'))
               : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 8,
+                ),
                 itemCount: _expenditures.length,
                 itemBuilder: (context, index) {
                   final expenditure = _expenditures[index];

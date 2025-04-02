@@ -15,7 +15,7 @@ class AddExpenditureSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ExpenditureController());
+    final controller = Get.find<ExpenditureController>();
     controller.initExpenditure(existingExpenditure);
 
     return Container(

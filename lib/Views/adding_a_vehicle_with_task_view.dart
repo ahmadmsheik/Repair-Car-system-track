@@ -1258,8 +1258,7 @@ class _AddingAVehicleWithTaskViewState
                                         'Data saved successfully!',
                                       );
 
-                                      Get.back();
-                                      Get.back();
+                                      Navigator.pop(context);
                                     } catch (e) {
                                       // Handle any errors
                                       Get.snackbar(

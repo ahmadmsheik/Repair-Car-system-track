@@ -21,38 +21,26 @@ class StatisticsPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(() {
-        if (_controller.monthlyRevenue.isEmpty ||
-            _controller.taskStatusDistribution.isEmpty) {
-          return Center(
-            child: Text(
-              'No data available',
-              style: TextStyle(fontSize: 24, color: Colors.white),
-            ),
-          );
-        }
-
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildSummaryCards(),
-              SizedBox(height: 24),
-              _buildMonthlyRevenueChart(),
-              SizedBox(height: 24),
-              _buildTaskStatusChart(),
-              SizedBox(height: 24),
-              _buildVehicleMakeChart(),
-              SizedBox(height: 24),
-              _buildPartsCostChart(),
-              SizedBox(height: 24),
-              _buildExpenditureChart(), // Add this line
-              SizedBox(height: 24),
-              _buildExpenditureByTypeChart(), // Add this line
-            ],
-          ),
-        );
-      }),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildSummaryCards(),
+            SizedBox(height: 24),
+            _buildMonthlyRevenueChart(),
+            SizedBox(height: 24),
+            _buildTaskStatusChart(),
+            SizedBox(height: 24),
+            _buildVehicleMakeChart(),
+            SizedBox(height: 24),
+            _buildPartsCostChart(),
+            SizedBox(height: 24),
+            _buildExpenditureChart(), // Add this line
+            SizedBox(height: 24),
+            _buildExpenditureByTypeChart(), // Add this line
+          ],
+        ),
+      ),
     );
   }
 
@@ -66,31 +54,41 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Monthly Expenditure',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                primaryYAxis: NumericAxis(
-                  numberFormat: NumberFormat.currency(symbol: '\$'),
-                ),
-                series: <CartesianSeries>[
-                  ColumnSeries<ChartData, String>(
-                    dataSource: _controller.expenditureData,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    color: Colors.red[400],
-                    dataLabelSettings: DataLabelSettings(
-                      isVisible: true,
-                      labelAlignment: ChartDataLabelAlignment.outer,
-                      textStyle: TextStyle(fontSize: 10),
+              child: Obx(() {
+                if (_controller.expenditureByType.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
                     ),
+                  );
+                }
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  primaryYAxis: NumericAxis(
+                    numberFormat: NumberFormat.currency(symbol: '\$'),
                   ),
-                ],
-                tooltipBehavior: TooltipBehavior(enable: true),
-              ),
+                  series: <CartesianSeries>[
+                    ColumnSeries<ChartData, String>(
+                      dataSource: _controller.expenditureData,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      color: Colors.red[400],
+                      dataLabelSettings: DataLabelSettings(
+                        isVisible: true,
+                        labelAlignment: ChartDataLabelAlignment.outer,
+                        textStyle: TextStyle(fontSize: 10),
+                      ),
+                    ),
+                  ],
+                  tooltipBehavior: TooltipBehavior(enable: true),
+                );
+              }),
             ),
           ],
         ),
@@ -108,32 +106,43 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Expenditure by Type',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCircularChart(
-                legend: Legend(
-                  isVisible: true,
-                  overflowMode: LegendItemOverflowMode.wrap,
-                ),
-                series: <CircularSeries>[
-                  PieSeries<ChartData, String>(
-                    dataSource: _controller.expenditureByType,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    dataLabelSettings: DataLabelSettings(
-                      isVisible: true,
-                      labelPosition: ChartDataLabelPosition.outside,
+              child: Obx(() {
+                if (_controller.expenditureByType.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
                     ),
-                    explode: true,
-                    explodeIndex: 0,
-                    explodeOffset: '10%',
+                  );
+                }
+
+                return SfCircularChart(
+                  legend: Legend(
+                    isVisible: true,
+                    overflowMode: LegendItemOverflowMode.wrap,
                   ),
-                ],
-                tooltipBehavior: TooltipBehavior(enable: true),
-              ),
+                  series: <CircularSeries>[
+                    PieSeries<ChartData, String>(
+                      dataSource: _controller.expenditureByType,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      dataLabelSettings: DataLabelSettings(
+                        isVisible: true,
+                        labelPosition: ChartDataLabelPosition.outside,
+                      ),
+                      explode: true,
+                      explodeIndex: 0,
+                      explodeOffset: '10%',
+                    ),
+                  ],
+                  tooltipBehavior: TooltipBehavior(enable: true),
+                );
+              }),
             ),
           ],
         ),
@@ -145,33 +154,57 @@ class StatisticsPage extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Obx(
-            () => _buildSummaryCard(
+          child: Obx(() {
+            if (_controller.currentMonthRevenue.value == 0.0) {
+              return Center(
+                child: Text(
+                  'No data available',
+                  style: TextStyle(fontSize: 24, color: Colors.white),
+                ),
+              );
+            }
+            return _buildSummaryCard(
               'Monthly Revenue',
               '\$${_controller.currentMonthRevenue.value.toStringAsFixed(2)}',
               Colors.blue,
-            ),
-          ),
+            );
+          }),
         ),
         SizedBox(width: 8),
         Expanded(
-          child: Obx(
-            () => _buildSummaryCard(
+          child: Obx(() {
+            if (_controller.completedTasksCount.value == 0) {
+              return Center(
+                child: Text(
+                  'No data available',
+                  style: TextStyle(fontSize: 24, color: Colors.white),
+                ),
+              );
+            }
+            return _buildSummaryCard(
               'Completed Tasks',
               _controller.completedTasksCount.value.toString(),
               Colors.green,
-            ),
-          ),
+            );
+          }),
         ),
         SizedBox(width: 8),
         Expanded(
-          child: Obx(
-            () => _buildSummaryCard(
+          child: Obx(() {
+            if (_controller.totalVehiclesCount.value == 0) {
+              return Center(
+                child: Text(
+                  'No data available',
+                  style: TextStyle(fontSize: 24, color: Colors.white),
+                ),
+              );
+            }
+            return _buildSummaryCard(
               'Total Vehicles',
               _controller.totalVehiclesCount.value.toString(),
               Colors.orange,
-            ),
-          ),
+            );
+          }),
         ),
       ],
     );
@@ -219,23 +252,34 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Monthly Revenue by Week',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                series: <CartesianSeries>[
-                  ColumnSeries<ChartData, String>(
-                    dataSource: _controller.monthlyRevenue,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    color: Colors.blue,
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
+              child: Obx(() {
+                if (_controller.monthlyRevenue.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                  );
+                }
+
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  series: <CartesianSeries>[
+                    ColumnSeries<ChartData, String>(
+                      dataSource: _controller.monthlyRevenue,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      color: Colors.blue,
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                    ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -253,22 +297,33 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Task Status Distribution',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCircularChart(
-                legend: Legend(isVisible: true),
-                series: <CircularSeries>[
-                  PieSeries<ChartData, String>(
-                    dataSource: _controller.taskStatusDistribution,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
+              child: Obx(() {
+                if (_controller.taskStatusDistribution.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                  );
+                }
+
+                return SfCircularChart(
+                  legend: Legend(isVisible: true),
+                  series: <CircularSeries>[
+                    PieSeries<ChartData, String>(
+                      dataSource: _controller.taskStatusDistribution,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                    ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -286,23 +341,34 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Vehicle Makes in Shop',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                series: <CartesianSeries>[
-                  BarSeries<ChartData, String>(
-                    dataSource: _controller.vehicleMakeDistribution,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    color: Colors.green,
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
+              child: Obx(() {
+                if (_controller.vehicleMakeDistribution.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                  );
+                }
+
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  series: <CartesianSeries>[
+                    BarSeries<ChartData, String>(
+                      dataSource: _controller.vehicleMakeDistribution,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      color: Colors.green,
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                    ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
@@ -320,23 +386,34 @@ class StatisticsPage extends StatelessWidget {
           children: [
             Text(
               'Parts Cost by Supplier',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Container(
               height: 300,
-              child: SfCartesianChart(
-                primaryXAxis: CategoryAxis(),
-                series: <CartesianSeries>[
-                  LineSeries<ChartData, String>(
-                    dataSource: _controller.partsCostDistribution,
-                    xValueMapper: (ChartData data, _) => data.x,
-                    yValueMapper: (ChartData data, _) => data.y,
-                    markerSettings: MarkerSettings(isVisible: true),
-                    dataLabelSettings: DataLabelSettings(isVisible: true),
-                  ),
-                ],
-              ),
+              child: Obx(() {
+                if (_controller.vehicleMakeDistribution.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No data available',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                  );
+                }
+
+                return SfCartesianChart(
+                  primaryXAxis: CategoryAxis(),
+                  series: <CartesianSeries>[
+                    LineSeries<ChartData, String>(
+                      dataSource: _controller.partsCostDistribution,
+                      xValueMapper: (ChartData data, _) => data.x,
+                      yValueMapper: (ChartData data, _) => data.y,
+                      markerSettings: MarkerSettings(isVisible: true),
+                      dataLabelSettings: DataLabelSettings(isVisible: true),
+                    ),
+                  ],
+                );
+              }),
             ),
           ],
         ),
