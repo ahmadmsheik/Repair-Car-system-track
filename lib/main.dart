@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inter_repair_car/Models/repositories/DatabaseHelper.dart';
-
 import 'package:inter_repair_car/Routes/AppPage.dart';
 import 'package:inter_repair_car/Widgets/navigation_menu.dart';
 
@@ -26,8 +24,8 @@ final ThemeData darkTheme = ThemeData(
 void main() async {
   runApp(const MyApp());
 
-  DatabaseHelper db = DatabaseHelper();
-  db.deleteDatabasef();
+  // DatabaseHelper db = DatabaseHelper();
+  // db.deleteDatabasef();
 }
 
 class MyApp extends StatelessWidget {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 import 'package:inter_repair_car/Controllers/register_controller.dart';
 import 'package:inter_repair_car/Views/sign_in_view.dart';
 
@@ -125,6 +126,9 @@ class RegisterView extends StatelessWidget {
                             content: Text("Registration successful!"),
                           ),
                         );
+                        controller.clearFields();
+                        Get.back();
+                        Navigator.pop(context);
                       } else {
                         // Registration failed
                         ScaffoldMessenger.of(context).showSnackBar(

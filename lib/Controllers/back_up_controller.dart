@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Controllers/authentication_controller.dart';
 import 'package:inter_repair_car/Core/Network/DioClient.dart';
+import 'package:inter_repair_car/Models/Entities/Expenditure.dart';
+import 'package:inter_repair_car/Models/Entities/Part.dart';
 import 'package:inter_repair_car/Models/Entities/Task.dart';
 import 'package:inter_repair_car/Models/Entities/Client.dart';
 import 'package:inter_repair_car/Models/Entities/vehicle.dart';
@@ -25,12 +27,17 @@ class BackUpController extends GetxController {
       final clients = await dbHelper.getUsers();
       final vehicles = await dbHelper.getVehicles();
       final tasks = await dbHelper.getTasks();
+      final parts = await dbHelper.getAllParts();
+      final expenditures = await dbHelper.getExpenditures();
+
 
       final payload = jsonEncode({
         "clients": clients.map((client) => client.toMap()).toList(),
         
         "vehicles": vehicles.map((vehicle) => vehicle.toMap()).toList(),
         "tasks": tasks.map((task) => task.toMap()).toList(),
+        "parts": parts,
+        "expenditures": expenditures.map((e) => e.toMap()).toList(),
       });
 
       final response = await dio.post(
@@ -88,6 +95,8 @@ class BackUpController extends GetxController {
 
       await db.transaction((txn) async {
         // Clear existing data
+         await txn.delete('parts');
+        await txn.delete('expenditures');
         await txn.delete('tasks');
         await txn.delete('vehicles');
         await txn.delete('clients');
@@ -111,10 +120,24 @@ class BackUpController extends GetxController {
           'tasks',
         );
 
+        final parts = _parseEntities<Part>(
+          cloudData['parts'],
+          Part.fromJson,
+          'parts',
+        );
+
+        final expenditures = _parseEntities<Expenditure>(
+          cloudData['expenditures'],
+          Expenditure.fromJson,
+          'expenditures',
+        );
+
         final batch = txn.batch();
         _insertEntities(batch, 'clients', clients);
         _insertEntities(batch, 'vehicles', vehicles);
         _insertEntities(batch, 'tasks', tasks);
+        _insertEntities(batch, 'parts', parts);
+        _insertEntities(batch, 'expenditures', expenditures);
         await batch.commit(noResult: true);
 
         _showSuccess(

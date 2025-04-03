@@ -8,4 +8,11 @@ class RegisterController extends GetxController {
       TextEditingController();
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+
+  void clearFields() {
+    usernameController.clear();
+    passwordController.clear();
+    confirmPasswordController.clear();
+  }
 }

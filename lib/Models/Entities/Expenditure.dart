@@ -36,4 +36,20 @@ class Expenditure {
       description: map['description'],
     );
   }
+
+  factory Expenditure.fromJson(Map<String, dynamic> json) {
+    return Expenditure(
+      id: json['id'],
+      name: json['name'],
+      expenseType: json['expense_type'],
+      amount:
+          json['amount'] is int
+              ? (json['amount'] as int)
+                  .toDouble() // Handle integer values
+              : json['amount'],
+      dueDate:
+          json['due_date'] != null ? DateTime.parse(json['due_date']) : null,
+      description: json['description'],
+    );
+  }
 }

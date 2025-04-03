@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:inter_repair_car/Core/Network/DioClient.dart';
-
 import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 
@@ -78,13 +77,11 @@ class AuthenticationController extends GetxController {
           userId: userData['id'],
           joinDate: DateTime.parse(userData['created_at']),
         );
-
         _handleAuthSuccess(
           username,
           response.data['token'],
           'Registration successful!',
         );
-        Get.back();
         return true;
       }
       _handleError(
