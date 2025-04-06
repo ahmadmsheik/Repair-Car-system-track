@@ -17,6 +17,6 @@ class Task extends Model
         return $this->belongsTo(Vehicle::class, 'vehicle_id');
     }
     public function tasks(){
-        return $this->hasMany(Task::class,'vehicle_id');
+        return $this->hasMany(Task::class);
     }
 }

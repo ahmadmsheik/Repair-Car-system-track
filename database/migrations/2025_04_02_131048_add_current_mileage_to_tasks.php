@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-           $table->integer('current_mileage')->nullable()->after('cost');
+            $table->integer('current_mileage')->nullable()->after('cost');
         });
     }
 
