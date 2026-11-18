@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
-
 import 'package:inter_repair_car/Views/home_view.dart';
 import 'package:inter_repair_car/Views/settings_view.dart';
 

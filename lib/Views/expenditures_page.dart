@@ -39,7 +39,7 @@ class _ExpendituresPageState extends State<ExpendituresPage> {
   }
 
   void _showAddExpenditureSheet() {
-    // _expenditureController.clearForm(); // Clear form for new entry
+    // _expenditureController.clearForm();
     showModalBottomSheet(
       context: context,
       builder:

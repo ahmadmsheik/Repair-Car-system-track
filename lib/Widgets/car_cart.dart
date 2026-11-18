@@ -13,13 +13,13 @@ class CarCart extends StatelessWidget {
     required this.name,
     required this.imagePath,
     required this.year,
-    required this.vehicleId, // Replace vin with vehicleId
+    required this.vehicleId,
   });
 
   final String name;
   final String imagePath;
   final int year;
-  final int vehicleId; // Use vehicleId to fetch tasks
+  final int vehicleId;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,6 @@ class CarCart extends StatelessWidget {
             ),
             const SizedBox(width: 50),
             Expanded(
-              // Use Expanded to constrain the text width
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -100,8 +99,8 @@ class CarCart extends StatelessWidget {
                       color: Colors.white,
                     ),
                     overflow:
-                        TextOverflow.ellipsis, // Add ellipsis for overflow
-                    maxLines: 1, // Limit to one line
+                        TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                   Text(
                     "$year",
@@ -117,7 +116,7 @@ class CarCart extends StatelessWidget {
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator(); // Show a loader while fetching data
+                        return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
                         return Text(
                           'Error: ${snapshot.error}',
