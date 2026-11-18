@@ -18,14 +18,14 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // Validate the request
+
 
         $users = UserCloud::all();
         $validator = request()->validate([
             'username' => 'required|string|unique:user_clouds',
             'password' => 'required|string|min:6',
         ]);
-        // Create the user
+
         $user = UserCloud::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
@@ -54,17 +54,17 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Find the user by username
+
         $user = UserCloud::where('username', $request->username)->first();
 
-        // Check if the user exists and the password is correct
+
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
-        // Generate a token (optional, if using Laravel Sanctum or Passport)
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

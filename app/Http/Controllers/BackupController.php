@@ -71,24 +71,24 @@ class BackupController extends Controller
             DB::table('vehicles')->delete();
             DB::table('clients')->delete();
 
-            // Backup clients
+
             if ($request->has('clients')) {
                 foreach ($request->clients as $clientData) {
-                    Client::create($clientData); // Use create instead of updateOrCreate
+                    Client::create($clientData);
                 }
             }
 
-            // Backup vehicles
+
             if ($request->has('vehicles')) {
                 foreach ($request->vehicles as $vehicleData) {
-                    Vehicle::create($vehicleData); // Use create instead of updateOrCreate
+                    Vehicle::create($vehicleData);
                 }
             }
 
-            // Backup tasks
+
             if ($request->has('tasks')) {
                 foreach ($request->tasks as $taskData) {
-                    Task::create($taskData); // Use create instead of updateOrCreate
+                    Task::create($taskData);
                 }
             }
 
@@ -98,21 +98,21 @@ class BackupController extends Controller
                 }
             }
 
-            // Backup expenditures
+
             if ($request->has('expenditures')) {
                 foreach ($request->expenditures as $expenditureData) {
                     Expenditure::create($expenditureData);
                 }
             }
 
-            // Commit the transaction
+
             DB::commit();
 
             return response()->json([
                 'message' => 'Data backed up successfully',
             ], 200);
         } catch (\Exception $e) {
-            // Rollback the transaction in case of an error
+
             DB::rollBack();
 
             return response()->json([
@@ -130,14 +130,13 @@ class BackupController extends Controller
      */
     public function sendData(Request $request)
     {
-        // Fetch all tasks, vehicles, and clients
         $tasks = Task::with('vehicle.client')->get();
         $vehicles = Vehicle::with('client')->get();
         $clients = Client::all();
         $expenditures = Expenditure::all();
         $parts = Part::all();
 
-        // Combine all data into a single response
+
         $data = [
             'tasks' => $tasks,
             'vehicles' => $vehicles,
